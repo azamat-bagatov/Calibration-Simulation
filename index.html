@@ -278,6 +278,32 @@ function computeAverageFitness(population){
     return totalFitness/count;
 }
 
+function breed(individual1, individual2){
+    
+    var child = {}
+    
+    Object.keys(individual1).forEach(key => {
+        if(Math.random() > .5){
+            child[key] = individual1[key];
+        }
+        else{
+            child[key] = individual2[key];
+        }
+    })
+    
+    return child;
+}
+
+function mutateOrBreed(individual, mates, stepSize){
+    //Half the time mutate
+    if(Math.random() > .5){
+        return mutate(individual, stepSize);
+    }
+    else{
+        return breed(individual, mates[Math.floor(Math.random() * mates.length)])
+    }
+}
+
 function cullAndBreed(population, stepSize){
     
     //Sort the array by best (lowest) fitness
@@ -291,10 +317,10 @@ function cullAndBreed(population, stepSize){
     //Mutate those individuals each 4 times to get more
     var newPopulation = [];
     survivors.forEach(survivor => {
-        newPopulation.push(mutate(survivor, stepSize));
-        newPopulation.push(mutate(survivor, stepSize));
-        newPopulation.push(mutate(survivor, stepSize));
-        newPopulation.push(mutate(survivor, stepSize));
+        newPopulation.push(mutateOrBreed(survivor, survivors, stepSize));
+        newPopulation.push(mutateOrBreed(survivor, survivors, stepSize));
+        newPopulation.push(mutateOrBreed(survivor, survivors, stepSize));
+        newPopulation.push(mutateOrBreed(survivor, survivors, stepSize));
     })
     
     //Return the new array
@@ -368,8 +394,9 @@ for(let i = 0; i < populationSize - 1; i++){
 population = evolve(population, .5, .25, 2000);
 population = evolve(population, .1, .01, 2000);
 
-console.log("Final population: ");
+console.log("Final fittest: ");
 console.log(population[0]);
+console.log(population);
 
 if(population[0].fitness < .2){
     console.log("Calibration success");
