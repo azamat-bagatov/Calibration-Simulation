@@ -36,7 +36,10 @@ const populationSize = 50;
 const measurements = [
 {tl: 748.604, tr: 2472.067, bl: 1426.493, br: 2764.56},
 {tl: 2372.21, tr: 1149.968, bl: 2436.423, br: 1238.632},
-{tl: 2087.219, tr: 1898.011, bl: 1714.555, br: 1452.135}
+{tl: 2087.219, tr: 1898.011, bl: 1714.555, br: 1452.135},
+{tl: 2847.807, tr: 1492.287, bl: 2543.025, br: 658.01},
+{tl: 1832.44, tr: 2724.18, bl: 846.658, br: 2179.185},
+{tl: 2068.196, tr: 1496.784, bl: 2043.238, br: 1437.005}
 ]
 
 function mutateGene(gene, maxMutation){
@@ -344,6 +347,16 @@ var initialIndividual = {
     <!-- br: {x: 3000, y: -20}, -->
     <!-- fitness: null -->
     <!-- } -->
+    
+measurements.forEach(m => {
+    m.tl = mutateGene(m.tl, 0);
+    m.tr = mutateGene(m.tr, 0);
+    m.bl = mutateGene(m.bl, 0);
+    m.br = mutateGene(m.br, 0);
+})
+
+console.log("Mutated measurements: ");
+console.log(measurements);
 
 //Build a mutated population
 var population = [initialIndividual];
@@ -357,6 +370,13 @@ population = evolve(population, .1, .01, 2000);
 
 console.log("Final population: ");
 console.log(population[0]);
+
+if(population[0].fitness < .2){
+    console.log("Calibration success");
+}
+else{
+    console.log("Calibration failure...bad measurements");
+}
 
 console.log("Final individual error: ");
 const fi = population[0];
