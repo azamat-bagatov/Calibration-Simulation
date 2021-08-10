@@ -64,11 +64,139 @@ function findDistanceToArc(px, py, r, ax, ay){
     return dist;
 }
 
+//Find the avg dist from xy point to all four arcs
+function distPointToArcs(x, y, radiuses, centers){
+    
+    const tlDist = findDistanceToArc(x, y, radiuses.tl, centers.tl.x, centers.tl.y);
+    
+    const trDist = findDistanceToArc(x, y, radiuses.tr, centers.tr.x, centers.tr.y);
+    
+    const blDist = findDistanceToArc(x, y, radiuses.bl, centers.bl.x, centers.bl.y);
+    
+    const brDist = findDistanceToArc(x, y, radiuses.br, centers.br.x, centers.br.y);
+    
+    const avg = (tlDist+trDist+blDist+brDist)/4;
+    
+    return avg;
+}
+
+//Walks to the center of the gradient recursively in chunk sizes of individual
+function walkClosenessGradient(x, y, stepSize, measurement, individual){
+    
+    var results = [];
+    //Find the minimum point in the set
+    
+    results.push({
+    dist: distPointToArcs(x,y,measurement, individual),
+    x: x,
+    y: y
+    })
+    
+    results.push({
+    dist: distPointToArcs(x,y + stepSize,measurement, individual),
+    x: x,
+    y: y + stepSize
+    })
+    
+    results.push({
+    dist: distPointToArcs(x + stepSize,y + stepSize,measurement, individual),
+    x: x + stepSize,
+    y: y + stepSize
+    })
+    
+    results.push({
+    dist: distPointToArcs(x + stepSize,y,measurement, individual),
+    x: x + stepSize,
+    y: y
+    })
+    
+    results.push({
+    dist: distPointToArcs(x + stepSize,y - stepSize,measurement, individual),
+    x: x + stepSize,
+    y: y - stepSize
+    })
+    
+    results.push({
+    dist: distPointToArcs(x ,y - stepSize,measurement, individual),
+    x: x,
+    y: y - stepSize
+    })
+    
+    results.push({
+    dist: distPointToArcs(x - stepSize,y - stepSize,measurement, individual),
+    x: x - stepSize,
+    y: y - stepSize
+    })
+    
+    results.push({
+    dist: distPointToArcs(x - stepSize,y,measurement, individual),
+    x: x - stepSize,
+    y: y
+    })
+    
+    results.push({
+    dist: distPointToArcs(x - stepSize,y + stepSize,measurement, individual),
+    x: x - stepSize,
+    y: y + stepSize
+    })
+    
+    //Find the smallest one
+    var minDist = results[0].dist;
+    var minX    = results[0].x;
+    var minY    = results[0].y;
+    
+    results.forEach(result => {
+        if(result.dist < minDist){
+            minDist = result.dist;
+            minX = result.x;
+            minY = result.y;
+        }
+    })
+    
+    //If that point is the center return
+    if(minX == x && minY == y){
+        return {dist: minDist, x: minX, y: minY};
+    }
+    else{  //Recursively continue walking the gradient
+        return walkClosenessGradient(minX, minY, stepSize, measurement, individual);
+    }
+}
+
+//Returns the point {x: , y: } closest to all four arcs
+function findPointClosestToArcs(measurement, individual){
+    
+    //Walk the gradient with decreasing step size
+    var pass1 = walkClosenessGradient(initialWidth/2,initialHeight/2, 100, measurement, individual);
+    var pass2 = walkClosenessGradient(pass1.x,pass1.y, 10, measurement, individual);
+    var pass3 = walkClosenessGradient(pass2.x,pass2.y, 1, measurement, individual);
+    var pass4 = walkClosenessGradient(pass3.x,pass3.y, .1, measurement, individual);
+    
+    return pass4;
+}
+
+function calculateAverage(array) {
+    var total = 0;
+    var count = 0;
+
+    array.forEach(function(item, index) {
+        total += item;
+        count++;
+    });
+
+    return total / count;
+}
+
 function evaluateFitness(individual){
     
+    var fitnesses = [];
     
+    measurements.forEach(measurement => {
+        fitnesses.push(findPointClosestToArcs(measurement, individual).dist);
+    });
     
-    individual.fitness = 5;
+    const fitness = calculateAverage(fitnesses);
+    
+    individual.fitness = fitness;
 }
 
 //Establish initial guesses for the corners
@@ -95,8 +223,7 @@ population.forEach(individual => {
     evaluateFitness(individual);
 });
 
-console.log("Arc dist test: ");
-console.log(findDistanceToArc(-2,0,5,-3,3));
+console.log(population);
 
 //Breed the best
 
