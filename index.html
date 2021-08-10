@@ -299,8 +299,10 @@ function cullAndBreed(population, stepSize){
     
 }
 
-function evolve(population, stepSize, targetFitness){
-
+function evolve(population, stepSize, targetFitness, timeout){
+    
+    var i = 0;
+    
     while(population[0].fitness > targetFitness){
 
         //Assign them all fitness functions...smaller is better
@@ -314,8 +316,13 @@ function evolve(population, stepSize, targetFitness){
         
         console.log(population[0].fitness);
 
-        //Repeat until the fitness function is within some threshold
-
+        //Repeat until the fitness function is within some threshold or timeout
+        
+        i++;
+        if(i > timeout){
+            console.log("Breaking");
+            break;
+        }
     }
     
     return population;
@@ -345,9 +352,8 @@ for(let i = 0; i < populationSize - 1; i++){
     population.push(mutate(initialIndividual, 2));
 }
 
-population = evolve(population, .5, .25);
-population = evolve(population, .1, .05);
-population = evolve(population, .01, .01);
+population = evolve(population, .5, .25, 2000);
+population = evolve(population, .1, .01, 2000);
 
 console.log("Final population: ");
 console.log(population[0]);
