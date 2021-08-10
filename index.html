@@ -21,10 +21,32 @@ const initialWidth = 3000;
 const initialHeight = 1800;
 
 const populationSize = 50;
+const mutationAmount = 20; //Maximum amount that a single mutation can change a value
+
+function mutateGene(gene){
+    return gene + ((Math.random()*mutationAmount*2) - mutationAmount);
+}
 
 function mutate (individual) {
-  console.log("Would mutate: ");
-  console.log(individual);
+  console.log("Mutating: ");
+  
+  let mutatedIndividual = JSON.parse(JSON.stringify(individual));
+  
+  mutatedIndividual.tl.x = mutateGene(individual.tl.x);
+  mutatedIndividual.tl.y = mutateGene(individual.tl.y);
+  
+  mutatedIndividual.tr.x = mutateGene(individual.tl.x);
+  mutatedIndividual.tr.y = mutateGene(individual.tl.y);
+  
+  mutatedIndividual.br.x = mutateGene(individual.tl.x);
+  mutatedIndividual.br.y = mutateGene(individual.tl.y);
+  
+  mutatedIndividual.bl.x = mutateGene(individual.tl.x);
+  mutatedIndividual.bl.y = mutateGene(individual.tl.y);
+  
+  console.log(mutatedIndividual);
+  
+  return mutatedIndividual;
 }
 
 //Establish initial guesses for the corners
