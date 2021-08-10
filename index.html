@@ -23,12 +23,24 @@ const initialHeight = 1800;
 const populationSize = 50;
 const mutationAmount = 20; //Maximum amount that a single mutation can change a value
 
+
+//True corners:
+//(30, 1820)              (2990,1830)
+//
+//(0,0)                   (3000, -20)
+
+
+const measurements = [
+{tl: 748.604, tr: 2472.067, bl: 1426.493, br: 2764.56},
+{tl: 2372.21, tr: 1149.968, bl: 2436.423, br: 1238.632},
+{tl: 2087.219, tr: 1898.011, bl: 1714.555, br: 1452.135}
+]
+
 function mutateGene(gene){
     return gene + ((Math.random()*mutationAmount*2) - mutationAmount);
 }
 
 function mutate (individual) {
-  console.log("Mutating: ");
   
   let mutatedIndividual = JSON.parse(JSON.stringify(individual));
   
@@ -41,12 +53,22 @@ function mutate (individual) {
   mutatedIndividual.br.x = mutateGene(individual.tl.x);
   mutatedIndividual.br.y = mutateGene(individual.tl.y);
   
-  mutatedIndividual.bl.x = mutateGene(individual.tl.x);
-  mutatedIndividual.bl.y = mutateGene(individual.tl.y);
-  
-  console.log(mutatedIndividual);
-  
   return mutatedIndividual;
+}
+
+function findDistanceToArc(px, py, r, ax, ay){
+    const i1 = px - ax;
+    const i2 = py - ay;
+    
+    const dist = Math.abs(Math.sqrt((i1*i1)+(i2*i2))-r);
+    return dist;
+}
+
+function evaluateFitness(individual){
+    
+    
+    
+    individual.fitness = 5;
 }
 
 //Establish initial guesses for the corners
@@ -54,7 +76,8 @@ var initialIndividual = {
     tl: {x: 0, y: initialHeight},
     tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
-    br: {x: initialWidth, y: 0}
+    br: {x: initialWidth, y: 0},
+    fitness: null
     }
 
 console.log("Initial individual: ");
@@ -68,6 +91,12 @@ for(let i = 0; i < populationSize; i++){
 }
 
 //Assign them all fitness functions...smaller is better
+population.forEach(individual => {
+    evaluateFitness(individual);
+});
+
+console.log("Arc dist test: ");
+console.log(findDistanceToArc(-2,0,5,-3,3));
 
 //Breed the best
 
