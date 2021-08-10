@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calibration Simulation</title>
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
+    
+</head>
+<body id= "mainBody">
+
+
+See the console.
+
+<script>
+
+const initialWidth = 3000;
+const initialHeight = 1800;
+
+const populationSize = 50;
+
+function mutate (individual) {
+  console.log("Would mutate: ");
+  console.log(individual);
+}
+
+//Establish initial guesses for the corners
+var initialIndividual = {
+    tl: {x: 0, y: initialHeight},
+    tr: {x: initialWidth, y: initialHeight},
+    bl: {x: 0, y: 0},
+    br: {x: initialWidth, y: 0}
+    }
+
+console.log("Initial individual: ");
+console.log(initialIndividual);
+
+//Build a mutated population
+var population = [];
+
+for(let i = 0; i < populationSize; i++){
+    population.push(mutate(initialIndividual));
+}
+
+//Assign them all fitness functions...smaller is better
+
+//Breed the best
+
+//Repeat until the fitness function is within some threshold
+
+
+
+</script>
+
+</body>
+</html>
