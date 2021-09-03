@@ -34,12 +34,12 @@ const populationSize = 50;
 
 
 const measurements = [
-{tl: 748.604, tr: 2472.067, bl: 1426.493, br: 2764.56},
-{tl: 2372.21, tr: 1149.968, bl: 2436.423, br: 1238.632},
-{tl: 2087.219, tr: 1898.011, bl: 1714.555, br: 1452.135},
-{tl: 2847.807, tr: 1492.287, bl: 2543.025, br: 658.01},
-{tl: 1832.44, tr: 2724.18, bl: 846.658, br: 2179.185},
-{tl: 2068.196, tr: 1496.784, bl: 2043.238, br: 1437.005}
+    {tl: 748.604, tr: 2472.067, bl: 1426.493, br: 2764.56},
+    {tl: 2372.21, tr: 1149.968, bl: 2436.423, br: 1238.632},
+    {tl: 2087.219, tr: 1898.011, bl: 1714.555, br: 1452.135},
+    {tl: 2847.807, tr: 1492.287, bl: 2543.025, br: 658.01},
+    {tl: 1832.44, tr: 2724.18, bl: 846.658, br: 2179.185},
+    {tl: 2068.196, tr: 1496.784, bl: 2043.238, br: 1437.005}
 ]
 
 function mutateGene(gene, maxMutation){
@@ -374,15 +374,15 @@ var initialIndividual = {
     <!-- fitness: null -->
     <!-- } -->
     
-measurements.forEach(m => {
-    m.tl = mutateGene(m.tl, 0);
-    m.tr = mutateGene(m.tr, 0);
-    m.bl = mutateGene(m.bl, 0);
-    m.br = mutateGene(m.br, 0);
-})
+<!-- measurements.forEach(m => { -->
+    <!-- m.tl = mutateGene(m.tl, 0); -->
+    <!-- m.tr = mutateGene(m.tr, 0); -->
+    <!-- m.bl = mutateGene(m.bl, 0); -->
+    <!-- m.br = mutateGene(m.br, 0); -->
+<!-- }) -->
 
-console.log("Mutated measurements: ");
-console.log(measurements);
+<!-- console.log("Mutated measurements: "); -->
+<!-- console.log(measurements); -->
 
 //Build a mutated population
 var population = [initialIndividual];
@@ -391,14 +391,16 @@ for(let i = 0; i < populationSize - 1; i++){
     population.push(mutate(initialIndividual, 2));
 }
 
-population = evolve(population, .5, .25, 2000);
-population = evolve(population, .1, .01, 2000);
+population = evolve(population, 5, .25, 200);
+population = evolve(population, .5, .25, 200);
+population = evolve(population, .1, .01, 200);
+population = evolve(population, .01, .01, 20000);
 
 console.log("Final fittest: ");
 console.log(population[0]);
-console.log(population);
+//console.log(population);
 
-if(population[0].fitness < .2){
+if(population[0].fitness < 1){
     console.log("Calibration success");
 }
 else{
@@ -407,14 +409,12 @@ else{
 
 console.log("Final individual error: ");
 const fi = population[0];
-const totalError = Math.abs(fi.tl.x- 30)
-+ Math.abs(fi.tl.y - 1820)
-+ Math.abs(fi.tr.x - 2990)
-+ Math.abs(fi.tr.y - 1830)
-+ Math.abs(fi.br.x - 3000)
-+ Math.abs(fi.br.y - -20);
-
-console.log(totalError/6);
+console.log(Math.abs(fi.tl.x- 30));
+console.log(Math.abs(fi.tl.y - 1820));
+console.log(Math.abs(fi.tr.x - 2990));
+console.log(Math.abs(fi.tr.y - 1830));
+console.log(Math.abs(fi.br.x - 3000));
+console.log(Math.abs(fi.br.y - -20));
 
 //(30, 1820)              (2990,1830)
 //
