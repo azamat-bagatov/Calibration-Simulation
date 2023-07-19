@@ -305,8 +305,6 @@ function walkLines(tlLine, trLine, blLine, brLine, stepSize){
     while(changeMade){
         changeMade = false;
 
-        console.log("Best fitness: " + bestFitness);
-
         //Try moving each line in each direction
         var tlLineUp = computeLineEndPoint({xBegin: tlLine.xBegin, yBegin: tlLine.yBegin, theta: tlLine.theta  + stepSize, length: tlLine.length});
         tlLineUp = computeLineEndPoint(tlLineUp);
@@ -383,7 +381,7 @@ function walkLines(tlLine, trLine, blLine, brLine, stepSize){
 }
 
 //Find the points at the end of the lines that are the closest together
-function magneticallyAttractedLines(measurement, individual){
+function magneticallyAttractedLinesFitness(measurement, individual){
 
     //Define the four lines with starting points and lengths
     var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: -.3, length: measurement.tl});
@@ -397,10 +395,26 @@ function magneticallyAttractedLines(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
 
     //Here we need to evolve the lines to be end closer together
-    console.log("Endpoint fitness: " + computeEndpointFitness(tlLine, trLine, blLine, brLine));
-    console.log(tlLine);
+    const finalFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
+    console.log("Endpoint fitness: " + finalFitness);
 
     drawLines(tlLine, trLine, blLine, brLine);
+
+    return finalFitness;
+}
+
+function computeLinesFitness(measurements, individual){
+    var fitnesses = [];
+    
+    measurements.forEach(measurement => {
+        fitnesses.push(magneticallyAttractedLinesFitness(measurement, individual));
+    });
+    
+    const fitness = calculateAverage(fitnesses);
+
+    console.log("Average fitness: " + fitness)
+    
+    individual.fitness = fitness;
 }
 
 //Used for blipping y values because the canvas naturally has y at the top
@@ -422,24 +436,33 @@ function drawLines(line1, line2, line3, line4) {
     ctx.moveTo(line1.xBegin, flipY(line1.yBegin));
     ctx.lineTo(line1.xEnd, flipY(line1.yEnd));
     ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(line1.xEnd, flipY(line1.yEnd), 2, 0, 2 * Math.PI);
+    ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(line2.xBegin, flipY(line2.yBegin));
     ctx.lineTo(line2.xEnd, flipY(line2.yEnd));
     ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(line2.xEnd, flipY(line2.yEnd), 2, 0, 2 * Math.PI);
+    ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(line3.xBegin, flipY(line3.yBegin));
     ctx.lineTo(line3.xEnd, flipY(line3.yEnd));
     ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(line3.xEnd, flipY(line3.yEnd), 2, 0, 2 * Math.PI);
+    ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(line4.xBegin, flipY(line4.yBegin));
     ctx.lineTo(line4.xEnd, flipY(line4.yEnd));
     ctx.stroke();
-
-    console.log("Drawing line from " + line1.xBegin + "," + line1.yBegin + " to " + line1.xEnd + "," + line1.yEnd);
-
+    ctx.beginPath();
+    ctx.arc(line4.xEnd, flipY(line4.yEnd), 2, 0, 2 * Math.PI);
+    ctx.fill();
 }
 
 //Returns the point {x: , y: } closest to all four arcs
@@ -600,8 +623,8 @@ function evolve(population, stepSize, targetFitness, timeout){
 
 //Establish initial guesses for the corners
 var initialIndividual = {
-    tl: {x: 0, y: initialHeight+5},
-    tr: {x: initialWidth, y: initialHeight-4.9},
+    tl: {x: 0, y: initialHeight},
+    tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
     br: {x: initialWidth, y: 0},
     fitness: 10000
@@ -630,7 +653,8 @@ canvas.height = 600;
 canvas.style.border   = "1px solid";
 document.getElementById("views").appendChild(canvas);
 
-magneticallyAttractedLines(measurements[0], initialIndividual);
+magneticallyAttractedLinesFitness(measurements[1], initialIndividual);
+//computeLinesFitness(measurements, initialIndividual);
 
 // //Build a mutated population
 // var population = [initialIndividual];
