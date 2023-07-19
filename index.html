@@ -267,7 +267,6 @@ function getEndPoint(startX, startY, angle, length) {
 
 //Compute the distance between two points
 function distanceBetweenPoints(a, b, c, d) {
-  console.log("a: " + a + " b: " + b + " c: " + c + " d: " + d)
   var dx = c - a;
   var dy = d - b;
   return Math.sqrt(dx * dx + dy * dy);
@@ -276,8 +275,6 @@ function distanceBetweenPoints(a, b, c, d) {
 //Computes how close all of the line end points are to eachother
 function computeEndpointFitness(line1, line2, line3, line4){
 
-    console.log(line1);
-    console.log(line2);
     const a = distanceBetweenPoints(line1.xEnd, line1.yEnd, line2.xEnd, line2.yEnd);
     const b = distanceBetweenPoints(line1.xEnd, line1.yEnd, line3.xEnd, line3.yEnd);
     const c = distanceBetweenPoints(line1.xEnd, line1.yEnd, line4.xEnd, line4.yEnd);
@@ -292,25 +289,116 @@ function computeEndpointFitness(line1, line2, line3, line4){
 
 //Compute line end point
 function computeLineEndPoint(line){
-    console.log("Computing end points of: ");
-    console.log(line);
     const end = getEndPoint(line.xBegin, line.yBegin, line.theta, line.length);
     line.xEnd = end.x;
     line.yEnd = end.y;
     return line;
 }
 
+//Walk lines sucessively until no change is made
+function walkLines(tlLine, trLine, blLine, brLine, stepSize){
+    var changeMade = true;
+
+    //Compute the best fitness so far
+    var bestFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
+
+    while(changeMade){
+        changeMade = false;
+
+        console.log("Best fitness: " + bestFitness);
+
+        //Try moving each line in each direction
+        var tlLineUp = computeLineEndPoint({xBegin: tlLine.xBegin, yBegin: tlLine.yBegin, theta: tlLine.theta  + stepSize, length: tlLine.length});
+        tlLineUp = computeLineEndPoint(tlLineUp);
+        tlLineUpFitness = computeEndpointFitness(tlLineUp, trLine, blLine, brLine);
+
+        if(tlLineUpFitness < bestFitness){
+            tlLine = tlLineUp;
+            bestFitness = tlLineUpFitness;
+            changeMade = true;
+        }
+
+        var tlLineDown = computeLineEndPoint({xBegin: tlLine.xBegin, yBegin: tlLine.yBegin, theta: tlLine.theta  - stepSize, length: tlLine.length});
+        tlLineDown = computeLineEndPoint(tlLineDown);
+        tlLineDownFitness = computeEndpointFitness(tlLineDown, trLine, blLine, brLine);
+
+        if(tlLineDownFitness < bestFitness){
+            tlLine = tlLineDown;
+            bestFitness = tlLineDownFitness;
+            changeMade = true;
+        }
+
+        var trLineUp = computeLineEndPoint({xBegin: trLine.xBegin, yBegin: trLine.yBegin, theta: trLine.theta  + stepSize, length: trLine.length});
+        trLineUp = computeLineEndPoint(trLineUp);
+        trLineUpFitness = computeEndpointFitness(tlLine, trLineUp, blLine, brLine);
+
+        if(trLineUpFitness < bestFitness){
+            trLine = trLineUp;
+            bestFitness = trLineUpFitness;
+            changeMade = true;
+        }
+
+        var trLineDown = computeLineEndPoint({xBegin: trLine.xBegin, yBegin: trLine.yBegin, theta: trLine.theta  - stepSize, length: trLine.length});
+        trLineDown = computeLineEndPoint(trLineDown);
+        trLineDownFitness = computeEndpointFitness(tlLine, trLineDown, blLine, brLine);
+
+        if(trLineDownFitness < bestFitness){
+            trLine = trLineDown;
+            bestFitness = trLineDownFitness;
+            changeMade = true;
+        }
+
+        var blLineUp = computeLineEndPoint({xBegin: blLine.xBegin, yBegin: blLine.yBegin, theta: blLine.theta  + stepSize, length: blLine.length});
+        blLineUp = computeLineEndPoint(blLineUp);
+        blLineUpFitness = computeEndpointFitness(tlLine, trLine, blLineUp, brLine);
+
+        if(blLineUpFitness < bestFitness){
+            blLine = blLineUp;
+            bestFitness = blLineUpFitness;
+            changeMade = true;
+        }
+
+        var blLineDown = computeLineEndPoint({xBegin: blLine.xBegin, yBegin: blLine.yBegin, theta: blLine.theta  - stepSize, length: blLine.length});
+        blLineDown = computeLineEndPoint(blLineDown);
+        blLineDownFitness = computeEndpointFitness(tlLine, trLine, blLineDown, brLine);
+
+        if(blLineDownFitness < bestFitness){
+            blLine = blLineDown;
+            bestFitness = blLineDownFitness;
+            changeMade = true;
+        }
+
+        var brLineUp = computeLineEndPoint({xBegin: brLine.xBegin, yBegin: brLine.yBegin, theta: brLine.theta  + stepSize, length: brLine.length});
+        brLineUp = computeLineEndPoint(brLineUp);
+        brLineUpFitness = computeEndpointFitness(tlLine, trLine, blLine, brLineUp);
+
+        if(brLineUpFitness < bestFitness){
+            brLine = brLineUp;
+            bestFitness = brLineUpFitness;
+            changeMade = true;
+        }
+    }
+
+    return {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine};
+}
+
 //Find the points at the end of the lines that are the closest together
 function magneticallyAttractedLines(measurement, individual){
 
     //Define the four lines with starting points and lengths
-    var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: -.5, length: measurement.tl});
+    var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: -.3, length: measurement.tl});
     var trLine = computeLineEndPoint({xBegin: individual.tr.x, yBegin: individual.tr.y, theta: 3.5, length: measurement.tr});
     var blLine = computeLineEndPoint({xBegin: individual.bl.x, yBegin: individual.bl.y, theta: .5, length: measurement.bl});
-    var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: 2.5, length: measurement.br});
+    var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: 2.6, length: measurement.br});
+
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .1);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .01);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .001);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
 
     //Here we need to evolve the lines to be end closer together
     console.log("Endpoint fitness: " + computeEndpointFitness(tlLine, trLine, blLine, brLine));
+    console.log(tlLine);
 
     drawLines(tlLine, trLine, blLine, brLine);
 }
@@ -512,8 +600,8 @@ function evolve(population, stepSize, targetFitness, timeout){
 
 //Establish initial guesses for the corners
 var initialIndividual = {
-    tl: {x: 0, y: initialHeight},
-    tr: {x: initialWidth, y: initialHeight},
+    tl: {x: 0, y: initialHeight+5},
+    tr: {x: initialWidth, y: initialHeight-4.9},
     bl: {x: 0, y: 0},
     br: {x: initialWidth, y: 0},
     fitness: 10000
