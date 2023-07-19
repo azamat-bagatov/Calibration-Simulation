@@ -296,88 +296,48 @@ function computeLineEndPoint(line){
 }
 
 //Walk lines sucessively until no change is made
-function walkLines(tlLine, trLine, blLine, brLine, stepSize){
-    var changeMade = true;
+function walkLines(tlLine, trLine, blLine, brLine, stepSize) {
+  let changeMade = true;
+  let bestFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
 
-    //Compute the best fitness so far
-    var bestFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
+  while (changeMade) {
+    changeMade = false;
 
-    while(changeMade){
-        changeMade = false;
+    const lines = [tlLine, trLine, blLine, brLine];
 
-        //Try moving each line in each direction
-        var tlLineUp = computeLineEndPoint({xBegin: tlLine.xBegin, yBegin: tlLine.yBegin, theta: tlLine.theta  + stepSize, length: tlLine.length});
-        tlLineUp = computeLineEndPoint(tlLineUp);
-        tlLineUpFitness = computeEndpointFitness(tlLineUp, trLine, blLine, brLine);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
 
-        if(tlLineUpFitness < bestFitness){
-            tlLine = tlLineUp;
-            bestFitness = tlLineUpFitness;
-            changeMade = true;
+      for (let direction of [-1, 1]) {
+        const newLine = computeLineEndPoint({
+          xBegin: line.xBegin,
+          yBegin: line.yBegin,
+          theta: line.theta + direction * stepSize,
+          length: line.length
+        });
+
+        const newFitness = computeEndpointFitness(
+          i === 0 ? newLine : tlLine,
+          i === 1 ? newLine : trLine,
+          i === 2 ? newLine : blLine,
+          i === 3 ? newLine : brLine
+        );
+
+        if (newFitness < bestFitness) {
+          lines[i] = newLine;
+          bestFitness = newFitness;
+          changeMade = true;
         }
-
-        var tlLineDown = computeLineEndPoint({xBegin: tlLine.xBegin, yBegin: tlLine.yBegin, theta: tlLine.theta  - stepSize, length: tlLine.length});
-        tlLineDown = computeLineEndPoint(tlLineDown);
-        tlLineDownFitness = computeEndpointFitness(tlLineDown, trLine, blLine, brLine);
-
-        if(tlLineDownFitness < bestFitness){
-            tlLine = tlLineDown;
-            bestFitness = tlLineDownFitness;
-            changeMade = true;
-        }
-
-        var trLineUp = computeLineEndPoint({xBegin: trLine.xBegin, yBegin: trLine.yBegin, theta: trLine.theta  + stepSize, length: trLine.length});
-        trLineUp = computeLineEndPoint(trLineUp);
-        trLineUpFitness = computeEndpointFitness(tlLine, trLineUp, blLine, brLine);
-
-        if(trLineUpFitness < bestFitness){
-            trLine = trLineUp;
-            bestFitness = trLineUpFitness;
-            changeMade = true;
-        }
-
-        var trLineDown = computeLineEndPoint({xBegin: trLine.xBegin, yBegin: trLine.yBegin, theta: trLine.theta  - stepSize, length: trLine.length});
-        trLineDown = computeLineEndPoint(trLineDown);
-        trLineDownFitness = computeEndpointFitness(tlLine, trLineDown, blLine, brLine);
-
-        if(trLineDownFitness < bestFitness){
-            trLine = trLineDown;
-            bestFitness = trLineDownFitness;
-            changeMade = true;
-        }
-
-        var blLineUp = computeLineEndPoint({xBegin: blLine.xBegin, yBegin: blLine.yBegin, theta: blLine.theta  + stepSize, length: blLine.length});
-        blLineUp = computeLineEndPoint(blLineUp);
-        blLineUpFitness = computeEndpointFitness(tlLine, trLine, blLineUp, brLine);
-
-        if(blLineUpFitness < bestFitness){
-            blLine = blLineUp;
-            bestFitness = blLineUpFitness;
-            changeMade = true;
-        }
-
-        var blLineDown = computeLineEndPoint({xBegin: blLine.xBegin, yBegin: blLine.yBegin, theta: blLine.theta  - stepSize, length: blLine.length});
-        blLineDown = computeLineEndPoint(blLineDown);
-        blLineDownFitness = computeEndpointFitness(tlLine, trLine, blLineDown, brLine);
-
-        if(blLineDownFitness < bestFitness){
-            blLine = blLineDown;
-            bestFitness = blLineDownFitness;
-            changeMade = true;
-        }
-
-        var brLineUp = computeLineEndPoint({xBegin: brLine.xBegin, yBegin: brLine.yBegin, theta: brLine.theta  + stepSize, length: brLine.length});
-        brLineUp = computeLineEndPoint(brLineUp);
-        brLineUpFitness = computeEndpointFitness(tlLine, trLine, blLine, brLineUp);
-
-        if(brLineUpFitness < bestFitness){
-            brLine = brLineUp;
-            bestFitness = brLineUpFitness;
-            changeMade = true;
-        }
+      }
     }
 
-    return {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine};
+    tlLine = lines[0];
+    trLine = lines[1];
+    blLine = lines[2];
+    brLine = lines[3];
+  }
+
+  return { tlLine, trLine, blLine, brLine };
 }
 
 //Find the points at the end of the lines that are the closest together
@@ -653,8 +613,8 @@ canvas.height = 600;
 canvas.style.border   = "1px solid";
 document.getElementById("views").appendChild(canvas);
 
-magneticallyAttractedLinesFitness(measurements[1], initialIndividual);
-//computeLinesFitness(measurements, initialIndividual);
+//magneticallyAttractedLinesFitness(measurements[1], initialIndividual);
+computeLinesFitness(measurements, initialIndividual);
 
 // //Build a mutated population
 // var population = [initialIndividual];
