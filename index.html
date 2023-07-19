@@ -258,6 +258,67 @@ function createView(point, measurement, individual){
     ctx.stroke();
 }
 
+//Get the end point of the line given the start point, angle, and length
+function getEndPoint(startX, startY, angle, length) {
+  var endX = startX + length * Math.cos(angle);
+  var endY = startY + length * Math.sin(angle);
+  return { x: endX, y: endY };
+}
+
+//Compute the distance between two points
+function distanceBetweenPoints(a, b, c, d) {
+  var dx = c - a;
+  var dy = d - b;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+//Computes how close all of the line end points are to eachother
+function computeEndpointFitness(line1, line2, line3, line4){
+    const a = distanceBetweenPoints(line1.xend, line1.yend, line2.xend, line2.yend);
+    const b = distanceBetweenPoints(line1.xend, line1.yend, line3.xend, line3.yend);
+    const c = distanceBetweenPoints(line1.xend, line1.yend, line4.xend, line4.yend);
+    const d = distanceBetweenPoints(line2.xend, line2.yend, line3.xend, line3.yend);
+    const e = distanceBetweenPoints(line2.xend, line2.yend, line4.xend, line4.yend);
+    const f = distanceBetweenPoints(line3.xend, line3.yend, line4.xend, line4.yend);
+
+    const fitness = (a+b+C+d+e+f)/6;
+
+    return fitness;
+}
+
+//Compute line end point
+function computeLineEndPoint(line){
+    const end = getEndPoint(line.xbegin, line.ybegin, line.theta, line.length);
+    line.xEnd = end.x;
+    line.yEnd = end.y;
+    return line;
+}
+
+//Find the points at the end of the lines that are the closest together
+function magneticallyAttractedLines(measurement, individual){
+
+    //Define the four lines with starting points and lengths
+    var tlLine = computeLineEndPoint({xbegin: individual.tl.x, ybegin: individual.tl.y, theta: Math.pi/2, length: measurement.tl});
+    var trLine = computeLineEndPoint({xbegin: individual.tr.x, ybegin: individual.tr.y, theta: Math.pi/2, length: measurement.tr});
+    var blLine = computeLineEndPoint({xbegin: individual.bl.x, ybegin: individual.bl.y, theta: Math.pi/2, length: measurement.bl});
+    var brLine = computeLineEndPoint({xbegin: individual.br.x, ybegin: individual.br.y, theta: Math.pi/2, length: measurement.br});
+
+    drawLines(tlLine, trLine, blLine, brLine);
+}
+
+function drawLines(line1, line2, line3, line4) {
+
+  // Set the stroke color to black
+  ctx.strokeStyle = "black";
+
+  // Draw the four lines
+  ctx.beginPath();
+  ctx.moveTo(line1.xBegin, individual.ybegin);
+  ctx.lineTo(line1.xEnd, line1.yEnd);
+  ctx.stroke();
+
+}
+
 //Returns the point {x: , y: } closest to all four arcs
 function findPointClosestToArcs(measurement, individual){
     
@@ -438,50 +499,40 @@ measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 200,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 200,0));
 
-console.log("Measurements: ");
-console.log(measurements);
-    
-<!-- measurements.forEach(m => { -->
-    <!-- m.tl = mutateGene(m.tl, 0); -->
-    <!-- m.tr = mutateGene(m.tr, 0); -->
-    <!-- m.bl = mutateGene(m.bl, 0); -->
-    <!-- m.br = mutateGene(m.br, 0); -->
-<!-- }) -->
 
-<!-- console.log("Mutated measurements: "); -->
-<!-- console.log(measurements); -->
+magneticallyAttractedLines(measurements[0], initialIndividual);
 
-//Build a mutated population
-var population = [initialIndividual];
+// //Build a mutated population
+// var population = [initialIndividual];
 
-for(let i = 0; i < populationSize - 1; i++){
-    population.push(mutate(initialIndividual, 2));
-}
+// for(let i = 0; i < populationSize - 1; i++){
+//     population.push(mutate(initialIndividual, 2));
+// }
 
-population = evolve(population, 5, .25, 200);
-population = evolve(population, .5, .25, 200);
-population = evolve(population, .1, .01, 200);
-population = evolve(population, .01, .01, 20000);
+// population = evolve(population, 5, .25, 200);
+// population = evolve(population, .5, .25, 200);
+// population = evolve(population, .1, .01, 200);
+// population = evolve(population, .01, .01, 20000);
 
-console.log("Final fittest: ");
-console.log(population[0]);
-//console.log(population);
+// console.log("Final fittest: ");
+// console.log(population[0]);
+// //console.log(population);
 
-if(population[0].fitness < 1){
-    console.log("Calibration success");
-}
-else{
-    console.log("Calibration failure...bad measurements");
-}
+// if(population[0].fitness < 1){
+//     console.log("Calibration success");
+// }
+// else{
+//     console.log("Calibration failure...bad measurements");
+// }
 
-console.log("Final individual error: ");
-const fi = population[0];
-console.log(Math.abs(fi.tl.x- trueTLX));
-console.log(Math.abs(fi.tl.y - trueTLY));
-console.log(Math.abs(fi.tr.x - trueTRX));
-console.log(Math.abs(fi.tr.y - trueTRY));
-console.log(Math.abs(fi.br.x - trueBRX));
-console.log(Math.abs(fi.br.y - trueBRY));
+// console.log("Final individual error: ");
+// const fi = population[0];
+// console.log(Math.abs(fi.tl.x- trueTLX));
+// console.log(Math.abs(fi.tl.y - trueTLY));
+// console.log(Math.abs(fi.tr.x - trueTRX));
+// console.log(Math.abs(fi.tr.y - trueTRY));
+// console.log(Math.abs(fi.br.x - trueBRX));
+// console.log(Math.abs(fi.br.y - trueBRY));
 
 
 
