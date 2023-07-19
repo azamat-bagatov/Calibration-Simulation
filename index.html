@@ -22,8 +22,8 @@ See the console. It will take a while before you see anything. The program is ru
 <script>
 
 //This is the inital guess for how big the machine is. These numbers are wrong intensionally
-const initialWidth = 3009.5;
-const initialHeight = 1790.5;
+const initialWidth = 700;
+const initialHeight = 400;
 
 //The size of each generation of the population
 const populationSize = 50;
@@ -31,12 +31,12 @@ const populationSize = 50;
 
 //These are the true corners of the machine that we want to solve for
 const trueTLX = 0;
-const trueTLY = 1800;
-const trueTRX = 3000;
-const trueTRY = 1800;
+const trueTLY = 400;
+const trueTRX = 700;
+const trueTRY = 400;
 const trueBLX = 0;
 const trueBLY = 0;
-const trueBRX = 3000;
+const trueBRX = 700;
 const trueBRY = 0;
 
 
@@ -267,6 +267,7 @@ function getEndPoint(startX, startY, angle, length) {
 
 //Compute the distance between two points
 function distanceBetweenPoints(a, b, c, d) {
+  console.log("a: " + a + " b: " + b + " c: " + c + " d: " + d)
   var dx = c - a;
   var dy = d - b;
   return Math.sqrt(dx * dx + dy * dy);
@@ -274,21 +275,26 @@ function distanceBetweenPoints(a, b, c, d) {
 
 //Computes how close all of the line end points are to eachother
 function computeEndpointFitness(line1, line2, line3, line4){
-    const a = distanceBetweenPoints(line1.xend, line1.yend, line2.xend, line2.yend);
-    const b = distanceBetweenPoints(line1.xend, line1.yend, line3.xend, line3.yend);
-    const c = distanceBetweenPoints(line1.xend, line1.yend, line4.xend, line4.yend);
-    const d = distanceBetweenPoints(line2.xend, line2.yend, line3.xend, line3.yend);
-    const e = distanceBetweenPoints(line2.xend, line2.yend, line4.xend, line4.yend);
-    const f = distanceBetweenPoints(line3.xend, line3.yend, line4.xend, line4.yend);
 
-    const fitness = (a+b+C+d+e+f)/6;
+    console.log(line1);
+    console.log(line2);
+    const a = distanceBetweenPoints(line1.xEnd, line1.yEnd, line2.xEnd, line2.yEnd);
+    const b = distanceBetweenPoints(line1.xEnd, line1.yEnd, line3.xEnd, line3.yEnd);
+    const c = distanceBetweenPoints(line1.xEnd, line1.yEnd, line4.xEnd, line4.yEnd);
+    const d = distanceBetweenPoints(line2.xEnd, line2.yEnd, line3.xEnd, line3.yEnd);
+    const e = distanceBetweenPoints(line2.xEnd, line2.yEnd, line4.xEnd, line4.yEnd);
+    const f = distanceBetweenPoints(line3.xEnd, line3.yEnd, line4.xEnd, line4.yEnd);
+
+    const fitness = (a+b+c+d+e+f)/6;
 
     return fitness;
 }
 
 //Compute line end point
 function computeLineEndPoint(line){
-    const end = getEndPoint(line.xbegin, line.ybegin, line.theta, line.length);
+    console.log("Computing end points of: ");
+    console.log(line);
+    const end = getEndPoint(line.xBegin, line.yBegin, line.theta, line.length);
     line.xEnd = end.x;
     line.yEnd = end.y;
     return line;
@@ -298,24 +304,53 @@ function computeLineEndPoint(line){
 function magneticallyAttractedLines(measurement, individual){
 
     //Define the four lines with starting points and lengths
-    var tlLine = computeLineEndPoint({xbegin: individual.tl.x, ybegin: individual.tl.y, theta: Math.pi/2, length: measurement.tl});
-    var trLine = computeLineEndPoint({xbegin: individual.tr.x, ybegin: individual.tr.y, theta: Math.pi/2, length: measurement.tr});
-    var blLine = computeLineEndPoint({xbegin: individual.bl.x, ybegin: individual.bl.y, theta: Math.pi/2, length: measurement.bl});
-    var brLine = computeLineEndPoint({xbegin: individual.br.x, ybegin: individual.br.y, theta: Math.pi/2, length: measurement.br});
+    var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: -.5, length: measurement.tl});
+    var trLine = computeLineEndPoint({xBegin: individual.tr.x, yBegin: individual.tr.y, theta: 3.5, length: measurement.tr});
+    var blLine = computeLineEndPoint({xBegin: individual.bl.x, yBegin: individual.bl.y, theta: .5, length: measurement.bl});
+    var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: 2.5, length: measurement.br});
+
+    //Here we need to evolve the lines to be end closer together
+    console.log("Endpoint fitness: " + computeEndpointFitness(tlLine, trLine, blLine, brLine));
 
     drawLines(tlLine, trLine, blLine, brLine);
 }
 
+//Used for blipping y values because the canvas naturally has y at the top
+function flipY(y) {
+  var canvas = document.getElementById("CursorLayer");
+  return canvas.height - y;
+}
+
 function drawLines(line1, line2, line3, line4) {
 
-  // Set the stroke color to black
-  ctx.strokeStyle = "black";
+    var canvas = document.getElementById("CursorLayer");
+    var ctx = canvas.getContext("2d");
 
-  // Draw the four lines
-  ctx.beginPath();
-  ctx.moveTo(line1.xBegin, individual.ybegin);
-  ctx.lineTo(line1.xEnd, line1.yEnd);
-  ctx.stroke();
+    // Set the stroke color to black
+    ctx.strokeStyle = "black";
+
+    // Draw the four lines
+    ctx.beginPath();
+    ctx.moveTo(line1.xBegin, flipY(line1.yBegin));
+    ctx.lineTo(line1.xEnd, flipY(line1.yEnd));
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(line2.xBegin, flipY(line2.yBegin));
+    ctx.lineTo(line2.xEnd, flipY(line2.yEnd));
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(line3.xBegin, flipY(line3.yBegin));
+    ctx.lineTo(line3.xEnd, flipY(line3.yEnd));
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(line4.xBegin, flipY(line4.yBegin));
+    ctx.lineTo(line4.xEnd, flipY(line4.yEnd));
+    ctx.stroke();
+
+    console.log("Drawing line from " + line1.xBegin + "," + line1.yBegin + " to " + line1.xEnd + "," + line1.yEnd);
 
 }
 
@@ -499,6 +534,13 @@ measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 200,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 200,0));
 
+
+var canvas = document.createElement('canvas');
+canvas.id     = "CursorLayer";
+canvas.width  = 1000;
+canvas.height = 600;
+canvas.style.border   = "1px solid";
+document.getElementById("views").appendChild(canvas);
 
 magneticallyAttractedLines(measurements[0], initialIndividual);
 
