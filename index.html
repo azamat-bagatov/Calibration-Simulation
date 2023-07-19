@@ -280,7 +280,7 @@ function calculateAverage(array) {
     var count = 0;
 
     array.forEach(function(item, index) {
-        total += item;
+        total += Math.abs(item);
         count++;
     });
 
