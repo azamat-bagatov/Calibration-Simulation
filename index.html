@@ -22,8 +22,8 @@ See the console. It will take a while before you see anything. The program is ru
 <script>
 
 //This is the inital guess for how big the machine is. These numbers are wrong intensionally
-const initialWidth = 3009.5;
-const initialHeight = 1790.5;
+const initialWidth = 3000; //3000
+const initialHeight = 1800; //1800
 
 //The size of each generation of the population
 const populationSize = 50;
@@ -269,7 +269,7 @@ function findPointClosestToArcs(measurement, individual){
     //var pass5 = walkClosenessGradient(pass4.x,pass4.y, .01, measurement, individual);
     //var pass6 = walkClosenessGradient(pass3.x,pass3.y, .001, measurement, individual);
     
-    <!-- createView(pass4, measurement, individual); -->
+    //createView(pass4, measurement, individual);
     
     return pass4;
 }
@@ -306,10 +306,12 @@ function evaluateFitness(individual){
     measurements.forEach(measurement => {
         fitnesses.push(findPointClosestToArcs(measurement, individual).dist);
     });
-    
-    const fitness = calculateMax(fitnesses);
+
+    const fitness = calculateAverage(fitnesses);
+
     
     individual.fitness = fitness;
+
 }
 
 //Computes the average fitness of the whole population. Used for printing out progress. Not currently used.
@@ -405,6 +407,48 @@ function evolve(population, stepSize, targetFitness, timeout){
     return population;
 }
 
+function computeGuessFitness(x, y){
+    const guessHeight = initialHeight + x;
+    const guessWidth = initialWidth + y;
+
+    //Establish initial guesses for the corners
+    var initialIndividual = {
+        tl: {x: 0, y: guessHeight},
+        tr: {x: guessWidth, y: guessHeight},
+        bl: {x: 0, y: 0},
+        br: {x: guessWidth, y: 0},
+        fitness: 10000
+    }
+
+    evaluateFitness(initialIndividual);
+
+    return initialIndividual.fitness;
+
+}
+
+function drawSquare(x, y, fitness){
+
+    var ctx = canvas.getContext("2d");
+
+    // Calculate the color based on the fitness value
+    const colorMax = 3;
+    var green = Math.round(255 * (colorMax - fitness) / colorMax);
+    var red = Math.round(255 * fitness / colorMax);
+    var color = "rgb(" + red + "," + green + ",0)";
+
+    // Set the fill color to the calculated color
+    ctx.fillStyle = color;
+
+    const squareSize = 5;
+
+    // Calculate the coordinates for the center of the canvas
+    var squareX = canvas.width / 2 + (squareSize/2)*x*10;
+    var squareY = canvas.height / 2+ (squareSize/2)*y*10;
+
+    // Draw a square
+    ctx.fillRect(squareX - squareSize/2, squareY - squareSize/2, squareSize, squareSize);
+
+}
 //This is where the program really begins. The above is all function definitions
 //The way that the progam works is that we basically guess where the four corners are and then
 //check to see how good that guess was. To see how good a guess was we "draw" circles from the four corner points
@@ -415,13 +459,13 @@ function evolve(population, stepSize, targetFitness, timeout){
 //using a genetic algorithm
 
 //Establish initial guesses for the corners
-var initialIndividual = {
-    tl: {x: 0, y: initialHeight},
-    tr: {x: initialWidth, y: initialHeight},
-    bl: {x: 0, y: 0},
-    br: {x: initialWidth, y: 0},
-    fitness: 10000
-}
+// var initialIndividual = {
+//     tl: {x: 0, y: initialHeight},
+//     tr: {x: initialWidth, y: initialHeight},
+//     bl: {x: 0, y: 0},
+//     br: {x: initialWidth, y: 0},
+//     fitness: 10000
+// }
 
 var measurements = [];
 
@@ -438,50 +482,59 @@ measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 200,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 200,0));
 
-console.log("Measurements: ");
-console.log(measurements);
-    
-<!-- measurements.forEach(m => { -->
-    <!-- m.tl = mutateGene(m.tl, 0); -->
-    <!-- m.tr = mutateGene(m.tr, 0); -->
-    <!-- m.bl = mutateGene(m.bl, 0); -->
-    <!-- m.br = mutateGene(m.br, 0); -->
-<!-- }) -->
+// console.log("Fitness of first guess: ");
+// evaluateFitness(initialIndividual);
+// console.log(initialIndividual.fitness);
 
-<!-- console.log("Mutated measurements: "); -->
-<!-- console.log(measurements); -->
+var canvas = document.createElement('canvas');
+canvas.id     = "CursorLayer";
+canvas.width  = 1000;
+canvas.height = 1000;
+canvas.style.border   = "1px solid";
+document.getElementById("views").appendChild(canvas);
+
+for (let i = -20; i <= 20; i += 0.1) {
+  for (let j = -20; j <= 20; j += 0.1) {
+    drawSquare(i, j, computeGuessFitness(i, j));
+  }
+}
+
+
+
+
+
 
 //Build a mutated population
-var population = [initialIndividual];
+// var population = [initialIndividual];
 
-for(let i = 0; i < populationSize - 1; i++){
-    population.push(mutate(initialIndividual, 2));
-}
+// for(let i = 0; i < populationSize - 1; i++){
+//     population.push(mutate(initialIndividual, 2));
+// }
 
-population = evolve(population, 5, .25, 200);
-population = evolve(population, .5, .25, 200);
-population = evolve(population, .1, .01, 200);
-population = evolve(population, .01, .01, 20000);
+// population = evolve(population, 5, .25, 200);
+// population = evolve(population, .5, .25, 200);
+// population = evolve(population, .1, .01, 200);
+// population = evolve(population, .01, .01, 20000);
 
-console.log("Final fittest: ");
-console.log(population[0]);
+// console.log("Final fittest: ");
+// console.log(population[0]);
 //console.log(population);
 
-if(population[0].fitness < 1){
-    console.log("Calibration success");
-}
-else{
-    console.log("Calibration failure...bad measurements");
-}
+// if(population[0].fitness < 1){
+//     console.log("Calibration success");
+// }
+// else{
+//     console.log("Calibration failure...bad measurements");
+// }
 
-console.log("Final individual error: ");
-const fi = population[0];
-console.log(Math.abs(fi.tl.x- trueTLX));
-console.log(Math.abs(fi.tl.y - trueTLY));
-console.log(Math.abs(fi.tr.x - trueTRX));
-console.log(Math.abs(fi.tr.y - trueTRY));
-console.log(Math.abs(fi.br.x - trueBRX));
-console.log(Math.abs(fi.br.y - trueBRY));
+// console.log("Final individual error: ");
+// const fi = population[0];
+// console.log(Math.abs(fi.tl.x- trueTLX));
+// console.log(Math.abs(fi.tl.y - trueTLY));
+// console.log(Math.abs(fi.tr.x - trueTRX));
+// console.log(Math.abs(fi.tr.y - trueTRY));
+// console.log(Math.abs(fi.br.x - trueBRX));
+// console.log(Math.abs(fi.br.y - trueBRY));
 
 
 
