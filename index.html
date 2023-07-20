@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Calibration Simulation</title>
+    <button id="compute-button">Refine Measurments</button>
     <style>
         body {
             margin: 0;
@@ -12,8 +13,7 @@
 </head>
 <body id= "mainBody">
 
-
-See the console. It will take a while before you see anything. The program is running in the background.
+<---click this button to see the simulation find the corners
 
 <div id = "views">
 
@@ -422,18 +422,24 @@ function computeFurthestFromCenterOfMass(lines, lastGuess){
 
     if(maxError == Math.abs(tlY)){
         console.log("Move tlY by: " + tlY/-2);
+        lastGuess.tl.y = lastGuess.tl.y + tlY/-2;
     }
     else if(maxError == Math.abs(trX)){
         console.log("Move trX by: " + trX/-2);
+        lastGuess.tr.x = lastGuess.tr.x + trX/-2;
     }
     else if(maxError == Math.abs(trY)){
         console.log("Move trY by: " + trY/-2);
+        lastGuess.tr.y = lastGuess.tr.y + trY/-2;
     }
     else if(maxError == Math.abs(brX)){
         console.log("Move brX by: " + brX/-2);
+        lastGuess.br.x = lastGuess.br.x + brX/-2;
     }
 
     console.log(lastGuess)
+
+    return lastGuess;
 
 
 }
@@ -454,6 +460,8 @@ function computeLinesFitness(measurements, lastGuess){
     lastGuess = computeFurthestFromCenterOfMass(allLines, lastGuess);
 
     console.log("Final Average fitness: " + fitness)
+
+    console.log(lastGuess);
 
     return lastGuess;
 }
@@ -653,6 +661,27 @@ function evolve(population, stepSize, targetFitness, timeout){
     return population;
 }
 
+var canvas = document.createElement('canvas');
+canvas.id     = "CursorLayer";
+canvas.width  = 1000;
+canvas.height = 600;
+canvas.style.border   = "1px solid";
+document.getElementById("views").appendChild(canvas);
+
+// Define the clearCanvas function here 
+function clearCanvas() {
+    const canvas = document.getElementById('CursorLayer');
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// Attach an event listener to the button
+const computeButton = document.getElementById('compute-button');
+computeButton.addEventListener('click', () => {
+    clearCanvas();
+    initialIndividual = computeLinesFitness(measurements, initialIndividual);
+});
+
 //This is where the program really begins. The above is all function definitions
 //The way that the progam works is that we basically guess where the four corners are and then
 //check to see how good that guess was. To see how good a guess was we "draw" circles from the four corner points
@@ -686,13 +715,6 @@ measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 100,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 100,0));
 
-
-var canvas = document.createElement('canvas');
-canvas.id     = "CursorLayer";
-canvas.width  = 1000;
-canvas.height = 600;
-canvas.style.border   = "1px solid";
-document.getElementById("views").appendChild(canvas);
 
 //magneticallyAttractedLinesFitness(measurements[1], initialIndividual);
 computeLinesFitness(measurements, initialIndividual);
