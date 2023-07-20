@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Calibration Simulation</title>
-    <button id="compute-button">Refine Measurments</button>
+    <button id="compute-button">Refine Measurments 1x</button>
+    <button id="compute-1k-button">1,000x</button>
     <style>
         body {
             margin: 0;
@@ -31,9 +32,9 @@ const populationSize = 50;
 
 //These are the true corners of the machine that we want to solve for
 const trueTLX = 0;
-const trueTLY = 400;
-const trueTRX = 700;
-const trueTRY = 400;
+const trueTLY = 410;
+const trueTRX = 708;
+const trueTRY = 385;
 const trueBLX = 0;
 const trueBLY = 0;
 const trueBRX = 700;
@@ -670,6 +671,18 @@ computeButton.addEventListener('click', () => {
     initialIndividual = computeLinesFitness(measurements, initialIndividual);
 });
 
+const compute1kButton = document.getElementById('compute-1k-button');
+compute1kButton.addEventListener('click', () => {
+    for(let i = 0; i < 1000; i++){
+        clearCanvas();
+        initialIndividual = computeLinesFitness(measurements, initialIndividual);
+    }
+});
+
+
+
+
+
 //This is where the program really begins. The above is all function definitions
 //The way that the progam works is that we basically guess where the four corners are and then
 //check to see how good that guess was. To see how good a guess was we "draw" circles from the four corner points
@@ -703,41 +716,7 @@ measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 100,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 100,0));
 
-
-//magneticallyAttractedLinesFitness(measurements[1], initialIndividual);
 computeLinesFitness(measurements, initialIndividual);
-
-// //Build a mutated population
-// var population = [initialIndividual];
-
-// for(let i = 0; i < populationSize - 1; i++){
-//     population.push(mutate(initialIndividual, 2));
-// }
-
-// population = evolve(population, 5, .25, 200);
-// population = evolve(population, .5, .25, 200);
-// population = evolve(population, .1, .01, 200);
-// population = evolve(population, .01, .01, 20000);
-
-// console.log("Final fittest: ");
-// console.log(population[0]);
-// //console.log(population);
-
-// if(population[0].fitness < 1){
-//     console.log("Calibration success");
-// }
-// else{
-//     console.log("Calibration failure...bad measurements");
-// }
-
-// console.log("Final individual error: ");
-// const fi = population[0];
-// console.log(Math.abs(fi.tl.x- trueTLX));
-// console.log(Math.abs(fi.tl.y - trueTLY));
-// console.log(Math.abs(fi.tr.x - trueTRX));
-// console.log(Math.abs(fi.tr.y - trueTRY));
-// console.log(Math.abs(fi.br.x - trueBRX));
-// console.log(Math.abs(fi.br.y - trueBRY));
 
 
 
