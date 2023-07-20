@@ -56,10 +56,10 @@ const trueBRY = 0;
 //TODO, make this zero centered. So takeSimulatedMeasurement(0,0...) is in the center of the work area
 //TOFIX, This assumes TLY = TRY and generally that the shape is a square which isn't always true
 function takeSimulatedMeasurement(x,y,maxError){
-    const tl = Math.sqrt((x*x)+(trueTLY-y)*(trueTLY-y)) + ((Math.random()*maxError*2) - maxError);
-    const tr = Math.sqrt((trueTRX-x)*(trueTRX-x)+(trueTRY-y)*(trueTRY-y)) + ((Math.random()*maxError*2) - maxError);
-    const bl = Math.sqrt((x*x)+(y*y)) + ((Math.random()*maxError*2) - maxError);
-    const br = Math.sqrt((trueBRX-x)*(trueBRX-x)+(y*y)) + ((Math.random()*maxError*2) - maxError);
+    const tl = distanceBetweenPoints(trueTLX, trueTLY, x, y) + ((Math.random()*maxError*2) - maxError);
+    const tr = distanceBetweenPoints(trueTRX, trueTRY, x, y) + ((Math.random()*maxError*2) - maxError);
+    const bl = distanceBetweenPoints(trueBLX, trueBLY, x, y) + ((Math.random()*maxError*2) - maxError);
+    const br = distanceBetweenPoints(trueBRX, trueBRY, x, y) + ((Math.random()*maxError*2) - maxError);
     return {tl: tl, tr: tr, bl: bl, br: br};
 }
 
@@ -392,15 +392,16 @@ var measurements = [];
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-measurements.push(takeSimulatedMeasurement(centerX,centerY,0));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY + 100,0));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY,0));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY - 100,0));
-measurements.push(takeSimulatedMeasurement(centerX,centerY + 100,0));
-measurements.push(takeSimulatedMeasurement(centerX,centerY - 100,0));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 100,0));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,0));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 100,0));
+const measurementError = 0;
+measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-200,centerY + 100,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-200,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-200,centerY - 100,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX,centerY + 100,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX,centerY - 100,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 100,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 100,measurementError));
 
 computeLinesFitness(measurements, initialIndividual);
 
