@@ -360,7 +360,7 @@ function magneticallyAttractedLinesFitness(measurement, individual){
 
     drawLines(tlLine, trLine, blLine, brLine);
 
-    return finalFitness;
+    return finalFitness; //This should also return the lines so that we can use them for later processing
 }
 
 function computeLinesFitness(measurements, individual){
@@ -371,6 +371,8 @@ function computeLinesFitness(measurements, individual){
     });
     
     const fitness = calculateAverage(fitnesses);
+
+    //Here is where we need to do the calculation of which line is the most fucked and which direction to move it
 
     console.log("Average fitness: " + fitness)
     
@@ -583,10 +585,10 @@ function evolve(population, stepSize, targetFitness, timeout){
 
 //Establish initial guesses for the corners
 var initialIndividual = {
-    tl: {x: 0, y: initialHeight},
-    tr: {x: initialWidth, y: initialHeight},
+    tl: {x: 0, y: initialHeight+5},
+    tr: {x: initialWidth+4, y: initialHeight-1.8},
     bl: {x: 0, y: 0},
-    br: {x: initialWidth, y: 0},
+    br: {x: initialWidth+60, y: 0},
     fitness: 10000
 }
 
@@ -596,14 +598,14 @@ const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
 measurements.push(takeSimulatedMeasurement(centerX,centerY,0));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY + 200,0));
+measurements.push(takeSimulatedMeasurement(centerX-200,centerY + 100,0));
 measurements.push(takeSimulatedMeasurement(centerX-200,centerY,0));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY - 200,0));
-measurements.push(takeSimulatedMeasurement(centerX,centerY + 200,0));
-measurements.push(takeSimulatedMeasurement(centerX,centerY - 200,0));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 200,0));
+measurements.push(takeSimulatedMeasurement(centerX-200,centerY - 100,0));
+measurements.push(takeSimulatedMeasurement(centerX,centerY + 100,0));
+measurements.push(takeSimulatedMeasurement(centerX,centerY - 100,0));
+measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 100,0));
 measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,0));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 200,0));
+measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 100,0));
 
 
 var canvas = document.createElement('canvas');
