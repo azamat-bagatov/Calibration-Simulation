@@ -356,25 +356,102 @@ function magneticallyAttractedLinesFitness(measurement, individual){
 
     //Here we need to evolve the lines to be end closer together
     const finalFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
-    console.log("Endpoint fitness: " + finalFitness);
 
     drawLines(tlLine, trLine, blLine, brLine);
 
-    return finalFitness; //This should also return the lines so that we can use them for later processing
+    return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}}; //This should also return the lines so that we can use them for later processing
+}
+
+//Computes the distance of one line's end point from the center of mass of the other three lines
+function computeDistanceFromCenterOfMass(lineToCompare, line2, line3, line4){
+
+    //Compute the center of mass
+    const x = (line2.xEnd + line3.xEnd + line4.xEnd)/3;
+    const y = (line2.yEnd + line3.yEnd + line4.yEnd)/3;
+
+    return {x: lineToCompare.xEnd - x, y: lineToCompare.yEnd - y};
+}
+
+//Compute the distances from the center of mass for four lines and converts them into the relivant variables that we can tweak
+function generateTweaks(lines){
+    //We care about the distances for tlY, trX, trY, brX
+
+    const tlY = computeDistanceFromCenterOfMass(lines.tlLine, lines.trLine, lines.blLine, lines.brLine).y;
+    const trX = computeDistanceFromCenterOfMass(lines.trLine, lines.tlLine, lines.blLine, lines.brLine).x;
+    const trY = computeDistanceFromCenterOfMass(lines.trLine, lines.tlLine, lines.blLine, lines.brLine).y;
+    const brX = computeDistanceFromCenterOfMass(lines.brLine, lines.tlLine, lines.trLine, lines.blLine).x;
+
+    return {tly: tlY, trX: trX, trY: trY, brX: brX};
+}
+
+//Computes all of the tweaks and summarizes them
+function computeFurthestFromCenterOfMass(lines){
+
+    var tlY = 0;
+    var trX = 0;
+    var trY = 0;
+    var brX = 0;
+
+    lines.forEach(line => {
+        const tweaks = generateTweaks(line);
+        
+        tlY = tlY + tweaks.tly;
+        trX = trX + tweaks.trX;
+        trY = trY + tweaks.trY;
+        brX = brX + tweaks.brX;
+
+    })
+
+    tlY = tlY/lines.length;
+    trX = trX/lines.length;
+    trY = trY/lines.length;
+    brX = brX/lines.length;
+
+    console.log("Amounts to move the measurements by: ")
+    console.log("tlY: " + tlY);
+    console.log("trX: " + trX);
+    console.log("trY: " + trY);
+    console.log("brX: " + brX);
+
+    const maxError = Math.max(
+        Math.abs(tlY),
+        Math.abs(trX),
+        Math.abs(trY),
+        Math.abs(brX)
+    );
+
+    if(maxError == Math.abs(tlY)){
+        console.log("Move tlY by: " + tlY/-2);
+    }
+    else if(maxError == Math.abs(trX)){
+        console.log("Move trX by: " + trX/-2);
+    }
+    else if(maxError == Math.abs(trY)){
+        console.log("Move trY by: " + trY/-2);
+    }
+    else if(maxError == Math.abs(brX)){
+        console.log("Move brX by: " + brX/-2);
+    }
+
+
 }
 
 function computeLinesFitness(measurements, individual){
     var fitnesses = [];
+    var allLines = [];
     
     measurements.forEach(measurement => {
-        fitnesses.push(magneticallyAttractedLinesFitness(measurement, individual));
+        const {fitness, lines} = magneticallyAttractedLinesFitness(measurement, individual);
+        fitnesses.push(fitness);
+        allLines.push(lines);
     });
     
     const fitness = calculateAverage(fitnesses);
 
     //Here is where we need to do the calculation of which line is the most fucked and which direction to move it
+    computeFurthestFromCenterOfMass(allLines);
 
-    console.log("Average fitness: " + fitness)
+    console.log("Final Average fitness: " + fitness)
     
     individual.fitness = fitness;
 }
@@ -585,10 +662,10 @@ function evolve(population, stepSize, targetFitness, timeout){
 
 //Establish initial guesses for the corners
 var initialIndividual = {
-    tl: {x: 0, y: initialHeight+5},
-    tr: {x: initialWidth+4, y: initialHeight-1.8},
+    tl: {x: 0, y: initialHeight},
+    tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
-    br: {x: initialWidth+60, y: 0},
+    br: {x: initialWidth, y: 0},
     fitness: 10000
 }
 
