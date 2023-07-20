@@ -322,7 +322,13 @@ function calculateAverage(array) {
     return total / count;
 }
 
-
+function printResults(guess){
+    console.log("tlX error: " + (guess.tl.x - trueTLX) + "mm");
+    console.log("tlY error: " + (guess.tl.y - trueTLY) + "mm");
+    console.log("trX error: " + (guess.tr.x - trueTRX) + "mm");
+    console.log("trY error: " + (guess.tr.y - trueTRY) + "mm");
+    console.log("blX error: " + (guess.bl.x - trueBLX) + "mm");
+}
 
 
 
@@ -347,6 +353,7 @@ const computeButton = document.getElementById('compute-button');
 computeButton.addEventListener('click', () => {
     clearCanvas();
     initialIndividual = computeLinesFitness(measurements, initialIndividual);
+    printResults(initialIndividual);
 });
 
 const compute1kButton = document.getElementById('compute-1k-button');
@@ -355,6 +362,7 @@ compute1kButton.addEventListener('click', () => {
         clearCanvas();
         initialIndividual = computeLinesFitness(measurements, initialIndividual);
     }
+    printResults(initialIndividual);
 });
 
 
