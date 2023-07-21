@@ -6,6 +6,7 @@
     <button id="compute-button">Refine Measurments 1x</button>
     <button id="compute-1k-button">1,000x</button>
     <button id="compute-10k-button">10,000x</button>
+    <button id="compute-end-button">End</button>
     <style>
         body {
             margin: 0;
@@ -156,6 +157,8 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0000001);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00000001);
 
     //Here we need to evolve the lines to be end closer together
     const finalFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
@@ -263,6 +266,7 @@ function computeLinesFitness(measurements, lastGuess){
 
     //Here is where we need to do the calculation of which line is the most fucked and which direction to move it
     lastGuess = computeFurthestFromCenterOfMass(allLines, lastGuess);
+    lastGuess.fitness = fitness;
 
     console.log("Fitness: " + 1/fitness)
 
@@ -387,6 +391,29 @@ compute10kButton.addEventListener('click', () => {
 });
 
 
+const computeEndButton = document.getElementById('compute-end-button');
+computeEndButton.addEventListener('click', () => {
+    var maxFitness = -1;
+    var newFitness = 0;
+    while(newFitness > maxFitness){
+        maxFitness = newFitness;
+
+        //Run 1,000 steps
+        for(let i = 0; i < 100; i++){
+            clearCanvas();
+            initialIndividual = computeLinesFitness(measurements, initialIndividual);
+        }
+
+        newFitness = 1/initialIndividual.fitness;
+        console.log("Fitness in loop: ");
+        console.log(newFitness);
+
+
+    }
+    
+    printResults(initialIndividual);
+});
+
 
 
 
@@ -405,7 +432,7 @@ var initialIndividual = {
     tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
     br: {x: initialWidth, y: 0},
-    fitness: 10000
+    fitness: 0
 }
 
 
@@ -413,30 +440,30 @@ var initialIndividual = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-const measurementError = 0;
-var measurements = [];
-measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-600,centerY + 300,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-600,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-600,centerY - 300,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY + 300,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY - 300,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 600,centerY + 300,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 600,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 600,centerY - 300,measurementError));
+// const measurementError = 1;
+// var measurements = [];
+// measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-600,centerY + 300,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-600,centerY,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-600,centerY - 300,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX,centerY + 300,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX,centerY - 300,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 600,centerY + 300,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 600,centerY,measurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 600,centerY - 300,measurementError));
 
 
-// var measurements = [
-//     {bl:1956.02,   br:2312.48,   tr:2157.08,   tl:1810.92},
-//     {bl:1848.36,   br:2213.49,   tr:2248.73,   tl:1918.89},
-//     {bl:1753.28,   br:2126.07,   tr:2353.41,   tl:2040.73},
-//     {bl:2120.19,   br:2144.60,   tr:1977.70,   tl:1985.66},
-//     {bl:2020.48,   br:2040.41,   tr:2077.04,   tl:2084.95},
-//     {bl:1934.64,   br:1944.91,   tr:2190.06,   tl:2197.83},
-//     {bl:2292.05,   br:1986.20,   tr:1802.62,   tl:2164.88},
-//     {bl:2199.11,   br:1872.83,   tr:1911.00,   tl:2256.02},
-//     {bl:2117.83,   br:1769.85,   tr:2033.41,   tl:2360.49}
-// ]
+var measurements = [
+    {bl:1956.02,   br:2312.48,   tr:2157.08,   tl:1810.92},
+    {bl:1848.36,   br:2213.49,   tr:2248.73,   tl:1918.89},
+    {bl:1753.28,   br:2126.07,   tr:2353.41,   tl:2040.73},
+    {bl:2120.19,   br:2144.60,   tr:1977.70,   tl:1985.66},
+    {bl:2020.48,   br:2040.41,   tr:2077.04,   tl:2084.95},
+    {bl:1934.64,   br:1944.91,   tr:2190.06,   tl:2197.83},
+    {bl:2292.05,   br:1986.20,   tr:1802.62,   tl:2164.88},
+    {bl:2199.11,   br:1872.83,   tr:1911.00,   tl:2256.02},
+    {bl:2117.83,   br:1769.85,   tr:2033.41,   tl:2360.49}
+]
 
 computeLinesFitness(measurements, initialIndividual);
 
