@@ -24,21 +24,18 @@
 <script>
 
 //This is the inital guess for how big the machine is. These numbers are wrong intensionally
-const initialWidth = 700;
-const initialHeight = 400;
-
-//The size of each generation of the population
-const populationSize = 50;
+const initialWidth = 3400;
+const initialHeight = 2000;
 
 
 //These are the true corners of the machine that we want to solve for
-const trueTLX = -5;
-const trueTLY = 410;
-const trueTRX = 708;
-const trueTRY = 385;
+const trueTLX = -21;
+const trueTLY = 2142;
+const trueTRX = 3446;
+const trueTRY = 2217;
 const trueBLX = 0;
 const trueBLY = 0;
-const trueBRX = 710;
+const trueBRX = 3479;
 const trueBRY = 0;
 
 
@@ -54,8 +51,6 @@ const trueBRY = 0;
 
 //This takes in the X and Y cordinates to take a measurement along with the maximum error and
 //returns a simulated measurement at that location. X and Y are referenced to the BL corner.
-//TODO, make this zero centered. So takeSimulatedMeasurement(0,0...) is in the center of the work area
-//TOFIX, This assumes TLY = TRY and generally that the shape is a square which isn't always true
 function takeSimulatedMeasurement(x,y,maxError){
     const tl = distanceBetweenPoints(trueTLX, trueTLY, x, y) + ((Math.random()*maxError*2) - maxError);
     const tr = distanceBetweenPoints(trueTRX, trueTRY, x, y) + ((Math.random()*maxError*2) - maxError);
@@ -64,18 +59,18 @@ function takeSimulatedMeasurement(x,y,maxError){
     return {tl: tl, tr: tr, bl: bl, br: br};
 }
 
-//Get the end point of the line given the start point, angle, and length
-function getEndPoint(startX, startY, angle, length) {
-  var endX = startX + length * Math.cos(angle);
-  var endY = startY + length * Math.sin(angle);
-  return { x: endX, y: endY };
-}
-
 //Compute the distance between two points
 function distanceBetweenPoints(a, b, c, d) {
   var dx = c - a;
   var dy = d - b;
   return Math.sqrt(dx * dx + dy * dy);
+}
+
+//Get the end point of the line given the start point, angle, and length
+function getEndPoint(startX, startY, angle, length) {
+  var endX = startX + length * Math.cos(angle);
+  var endY = startY + length * Math.sin(angle);
+  return { x: endX, y: endY };
 }
 
 //Computes how close all of the line end points are to eachother
@@ -281,7 +276,6 @@ function flipY(y) {
 }
 
 function drawLines(line1, line2, line3, line4) {
-
     var canvas = document.getElementById("CursorLayer");
     var ctx = canvas.getContext("2d");
 
@@ -290,37 +284,37 @@ function drawLines(line1, line2, line3, line4) {
 
     // Draw the four lines
     ctx.setLineDash([5, 5]);
-    
+
     ctx.beginPath();
-    ctx.moveTo(line1.xBegin, flipY(line1.yBegin));
-    ctx.lineTo(line1.xEnd, flipY(line1.yEnd));
+    ctx.moveTo(line1.xBegin / 4, flipY(line1.yBegin / 4));
+    ctx.lineTo(line1.xEnd / 4, flipY(line1.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line1.xEnd, flipY(line1.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line1.xEnd / 4, flipY(line1.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(line2.xBegin, flipY(line2.yBegin));
-    ctx.lineTo(line2.xEnd, flipY(line2.yEnd));
+    ctx.moveTo(line2.xBegin / 4, flipY(line2.yBegin / 4));
+    ctx.lineTo(line2.xEnd / 4, flipY(line2.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line2.xEnd, flipY(line2.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line2.xEnd / 4, flipY(line2.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(line3.xBegin, flipY(line3.yBegin));
-    ctx.lineTo(line3.xEnd, flipY(line3.yEnd));
+    ctx.moveTo(line3.xBegin / 4, flipY(line3.yBegin / 4));
+    ctx.lineTo(line3.xEnd / 4, flipY(line3.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line3.xEnd, flipY(line3.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line3.xEnd / 4, flipY(line3.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(line4.xBegin, flipY(line4.yBegin));
-    ctx.lineTo(line4.xEnd, flipY(line4.yEnd));
+    ctx.moveTo(line4.xBegin / 4, flipY(line4.yBegin / 4));
+    ctx.lineTo(line4.xEnd / 4, flipY(line4.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line4.xEnd, flipY(line4.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line4.xEnd / 4, flipY(line4.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 }
 
@@ -340,11 +334,12 @@ function calculateAverage(array) {
 }
 
 function printResults(guess){
-    console.log("tlX error: " + (guess.tl.x - trueTLX) + "mm");
-    console.log("tlY error: " + (guess.tl.y - trueTLY) + "mm");
-    console.log("trX error: " + (guess.tr.x - trueTRX) + "mm");
-    console.log("trY error: " + (guess.tr.y - trueTRY) + "mm");
-    console.log("blX error: " + (guess.bl.x - trueBLX) + "mm");
+    console.log("tlX error: " + (guess.tl.x - trueTLX) + "mm at: " + guess.tl.x);
+    console.log("tlY error: " + (guess.tl.y - trueTLY) + "mm at: " + guess.tl.y);
+    console.log("trX error: " + (guess.tr.x - trueTRX) + "mm at: " + guess.tr.x);
+    console.log("trY error: " + (guess.tr.y - trueTRY) + "mm at: " + guess.tr.y);
+    console.log("brX error: " + (guess.br.x - trueBRX) + "mm at: " + guess.br.x);
+
 }
 
 
@@ -413,21 +408,35 @@ var initialIndividual = {
     fitness: 10000
 }
 
-var measurements = [];
+
 
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
 const measurementError = 0;
+var measurements = [];
 measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY + 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY - 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY + 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY - 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 100,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-600,centerY + 300,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-600,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-600,centerY - 300,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX,centerY + 300,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX,centerY - 300,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 600,centerY + 300,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 600,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 600,centerY - 300,measurementError));
+
+
+// var measurements = [
+//     {bl:1956.02,   br:2312.48,   tr:2157.08,   tl:1810.92},
+//     {bl:1848.36,   br:2213.49,   tr:2248.73,   tl:1918.89},
+//     {bl:1753.28,   br:2126.07,   tr:2353.41,   tl:2040.73},
+//     {bl:2120.19,   br:2144.60,   tr:1977.70,   tl:1985.66},
+//     {bl:2020.48,   br:2040.41,   tr:2077.04,   tl:2084.95},
+//     {bl:1934.64,   br:1944.91,   tr:2190.06,   tl:2197.83},
+//     {bl:2292.05,   br:1986.20,   tr:1802.62,   tl:2164.88},
+//     {bl:2199.11,   br:1872.83,   tr:1911.00,   tl:2256.02},
+//     {bl:2117.83,   br:1769.85,   tr:2033.41,   tl:2360.49}
+// ]
 
 computeLinesFitness(measurements, initialIndividual);
 
