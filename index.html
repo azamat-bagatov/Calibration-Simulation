@@ -89,7 +89,7 @@ function computeEndpointFitness(line1, line2, line3, line4){
     return fitness;
 }
 
-//Compute line end point
+//Compute line end point. Returns the line with the end point added
 function computeLineEndPoint(line){
     const end = getEndPoint(line.xBegin, line.yBegin, line.theta, line.length);
     line.xEnd = end.x;
@@ -144,12 +144,29 @@ function walkLines(tlLine, trLine, blLine, brLine, stepSize) {
 
 //Find the points at the end of the lines that are the closest together
 function magneticallyAttractedLinesFitness(measurement, individual){
+     console.log(measurement.tlTheta);
+
+
+    //These set the inital conditions for theta. They don't really mater, they just have to kinda point to the middle of the frame.
+    if(measurement.tlTheta == undefined){
+        measurement.tlTheta = -.3;
+    }
+    if(measurement.trTheta == undefined){
+        measurement.trTheta = 3.5;
+    }
+    if(measurement.blTheta == undefined){
+        measurement.blTheta = .5;
+    }
+    if(measurement.brTheta == undefined){
+        measurement.brTheta = 2.6;
+    }
+
 
     //Define the four lines with starting points and lengths
-    var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: -.3, length: measurement.tl});
-    var trLine = computeLineEndPoint({xBegin: individual.tr.x, yBegin: individual.tr.y, theta: 3.5, length: measurement.tr});
-    var blLine = computeLineEndPoint({xBegin: individual.bl.x, yBegin: individual.bl.y, theta: .5, length: measurement.bl});
-    var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: 2.6, length: measurement.br});
+    var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: measurement.tlTheta, length: measurement.tl});
+    var trLine = computeLineEndPoint({xBegin: individual.tr.x, yBegin: individual.tr.y, theta: measurement.trTheta, length: measurement.tr});
+    var blLine = computeLineEndPoint({xBegin: individual.bl.x, yBegin: individual.bl.y, theta: measurement.blTheta, length: measurement.bl});
+    var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: measurement.brTheta, length: measurement.br});
 
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .1);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .01);
@@ -160,12 +177,17 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0000001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00000001);
 
+    measurement.tlTheta = tlLine.theta;
+    measurement.trTheta = trLine.theta;
+    measurement.blTheta = blLine.theta;
+    measurement.brTheta = brLine.theta;
+
     //Here we need to evolve the lines to be end closer together
     const finalFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
 
     drawLines(tlLine, trLine, blLine, brLine);
 
-    return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}}; //This should also return the lines so that we can use them for later processing
+    return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}};
 }
 
 //Computes the distance of one line's end point from the center of mass of the other three lines
@@ -486,7 +508,7 @@ var initialIndividual = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-const measurementError = 0;
+const measurementError = 1;
 var measurements = [];
 measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
 measurements.push(takeSimulatedMeasurement(centerX-800,centerY + 400,measurementError));
@@ -497,6 +519,8 @@ measurements.push(takeSimulatedMeasurement(centerX,centerY - 400,measurementErro
 measurements.push(takeSimulatedMeasurement(centerX + 800,centerY + 400,measurementError));
 measurements.push(takeSimulatedMeasurement(centerX + 800,centerY,measurementError));
 measurements.push(takeSimulatedMeasurement(centerX + 800,centerY - 400,measurementError));
+
+
 
 
 // var measurements = [
