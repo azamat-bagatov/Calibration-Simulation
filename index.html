@@ -25,8 +25,8 @@
 <script>
 
 //This is the inital guess for how big the machine is. These numbers are wrong intensionally
-const initialWidth = 3400;
-const initialHeight = 2000;
+const initialWidth = 3430;
+const initialHeight = 2210;
 
 
 //These are the true corners of the machine that we want to solve for
@@ -268,7 +268,7 @@ function computeLinesFitness(measurements, lastGuess){
     lastGuess = computeFurthestFromCenterOfMass(allLines, lastGuess);
     lastGuess.fitness = fitness;
 
-    console.log("Fitness: " + 1/fitness)
+    //console.log("Fitness: " + 1/fitness)
 
     return lastGuess;
 }
@@ -347,6 +347,32 @@ function printResults(guess){
 }
 
 
+function projectMeasurement(measurement){
+    const tlZ = 130;
+    const trZ = 95;
+    const blZ = 71;
+    const brZ = 118;
+
+    const tl = Math.sqrt(Math.pow(measurement.tl,2) - Math.pow(tlZ,2));
+    const tr = Math.sqrt(Math.pow(measurement.tr,2) - Math.pow(trZ,2));
+    const bl = Math.sqrt(Math.pow(measurement.bl,2) - Math.pow(blZ,2));
+    const br = Math.sqrt(Math.pow(measurement.br,2) - Math.pow(brZ,2));
+
+    return {tl: tl, tr: tr, bl: bl, br: br};
+}
+
+
+function projectMeasurements(measurements){
+    var projectedMeasurements = [];
+
+    measurements.forEach(measurement => {
+        projectedMeasurements.push(projectMeasurement(measurement));
+    });
+
+    return projectedMeasurements;
+}
+
+
 
 
 
@@ -377,6 +403,7 @@ compute1kButton.addEventListener('click', () => {
     for(let i = 0; i < 1000; i++){
         clearCanvas();
         initialIndividual = computeLinesFitness(measurements, initialIndividual);
+        console.log("Fitness: " + 1/initialIndividual.fitness);
     }
     printResults(initialIndividual);
 });
@@ -386,6 +413,7 @@ compute10kButton.addEventListener('click', () => {
     for(let i = 0; i < 10000; i++){
         clearCanvas();
         initialIndividual = computeLinesFitness(measurements, initialIndividual);
+        console.log("Fitness: " + 1/initialIndividual.fitness);
     }
     printResults(initialIndividual);
 });
@@ -395,21 +423,39 @@ const computeEndButton = document.getElementById('compute-end-button');
 computeEndButton.addEventListener('click', () => {
     var maxFitness = -1;
     var newFitness = 0;
-    while(newFitness > maxFitness){
+
+    var stagnantCounter = 0;
+
+    while(stagnantCounter < 14){
         maxFitness = newFitness;
 
+        var maxFitnessThisRun = 0;
         //Run 1,000 steps
         for(let i = 0; i < 100; i++){
             clearCanvas();
             initialIndividual = computeLinesFitness(measurements, initialIndividual);
+            maxFitnessThisRun = Math.max(1/initialIndividual.fitness, maxFitnessThisRun);
         }
 
-        newFitness = 1/initialIndividual.fitness;
-        console.log("Fitness in loop: ");
-        console.log(newFitness);
+        newFitness = maxFitnessThisRun;
+        console.log("Fitness: " + newFitness);
+
+        if(stagnantCounter > 1){
+            console.log("Stagnant Counter: " + stagnantCounter);
+        }
+
+        if(newFitness <= maxFitness){
+            stagnantCounter++;
+        }
+        else{
+            stagnantCounter = 0;
+        }
 
 
     }
+
+    console.log("Maxfitness: " + maxFitness);
+    console.log("NewFitness: " + newFitness);
     
     printResults(initialIndividual);
 });
@@ -440,30 +486,31 @@ var initialIndividual = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-// const measurementError = 1;
-// var measurements = [];
-// measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX-600,centerY + 300,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX-600,centerY,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX-600,centerY - 300,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX,centerY + 300,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX,centerY - 300,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX + 600,centerY + 300,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX + 600,centerY,measurementError));
-// measurements.push(takeSimulatedMeasurement(centerX + 600,centerY - 300,measurementError));
+const measurementError = 0;
+var measurements = [];
+measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-800,centerY + 400,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-800,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX-800,centerY - 400,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX,centerY + 400,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX,centerY - 400,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 800,centerY + 400,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 800,centerY,measurementError));
+measurements.push(takeSimulatedMeasurement(centerX + 800,centerY - 400,measurementError));
 
 
-var measurements = [
-    {bl:1956.02,   br:2312.48,   tr:2157.08,   tl:1810.92},
-    {bl:1848.36,   br:2213.49,   tr:2248.73,   tl:1918.89},
-    {bl:1753.28,   br:2126.07,   tr:2353.41,   tl:2040.73},
-    {bl:2120.19,   br:2144.60,   tr:1977.70,   tl:1985.66},
-    {bl:2020.48,   br:2040.41,   tr:2077.04,   tl:2084.95},
-    {bl:1934.64,   br:1944.91,   tr:2190.06,   tl:2197.83},
-    {bl:2292.05,   br:1986.20,   tr:1802.62,   tl:2164.88},
-    {bl:2199.11,   br:1872.83,   tr:1911.00,   tl:2256.02},
-    {bl:2117.83,   br:1769.85,   tr:2033.41,   tl:2360.49}
-]
+// var measurements = [
+//     {bl:1676.38,   br:2927.83,   tr:2649.80,   tl:1204.46},
+//     {bl:1378.75,   br:2756.01,   tr:2786.01,   tl:1473.66},
+//     {bl:1135.23,   br:2626.92,   tr:2967.47,   tl:1793.41},
+//     {bl:2227.50,   br:2257.13,   tr:1894.42,   tl:1903.05},
+//     {bl:2019.58,   br:2037.69,   tr:2077.00,   tl:2085.37},
+//     {bl:1861.42,   br:1866.70,   tr:2314.87,   tl:2322.35},
+//     {bl:2913.30,   br:1731.83,   tr:1192.78,   tl:2660.01},
+//     {bl:2750.53,   br:1426.70,   tr:1464.68,   tl:2792.88},
+//     {bl:2633.14,   br:1162.88,   tr:1786.41,   tl:2974.08}
+// ]
+// measurements = projectMeasurements(measurements);
 
 computeLinesFitness(measurements, initialIndividual);
 
