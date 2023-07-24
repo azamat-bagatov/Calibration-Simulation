@@ -52,11 +52,11 @@ const trueBRY = 0;
 
 //This takes in the X and Y cordinates to take a measurement along with the maximum error and
 //returns a simulated measurement at that location. X and Y are referenced to the BL corner.
-function takeSimulatedMeasurement(x,y,maxError){
-    const tl = distanceBetweenPoints(trueTLX, trueTLY, x, y) + ((Math.random()*maxError*2) - maxError);
-    const tr = distanceBetweenPoints(trueTRX, trueTRY, x, y) + ((Math.random()*maxError*2) - maxError);
-    const bl = distanceBetweenPoints(trueBLX, trueBLY, x, y) + ((Math.random()*maxError*2) - maxError);
-    const br = distanceBetweenPoints(trueBRX, trueBRY, x, y) + ((Math.random()*maxError*2) - maxError);
+function takeSimulatedMeasurement(x,y,randomError, constantError){
+    const tl = distanceBetweenPoints(trueTLX, trueTLY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
+    const tr = distanceBetweenPoints(trueTRX, trueTRY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
+    const bl = distanceBetweenPoints(trueBLX, trueBLY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
+    const br = distanceBetweenPoints(trueBRX, trueBRY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
     return {tl: tl, tr: tr, bl: bl, br: br};
 }
 
@@ -144,8 +144,6 @@ function walkLines(tlLine, trLine, blLine, brLine, stepSize) {
 
 //Find the points at the end of the lines that are the closest together
 function magneticallyAttractedLinesFitness(measurement, individual){
-     console.log(measurement.tlTheta);
-
 
     //These set the inital conditions for theta. They don't really mater, they just have to kinda point to the middle of the frame.
     if(measurement.tlTheta == undefined){
@@ -366,6 +364,8 @@ function printResults(guess){
     console.log("trY error: " + (guess.tr.y - trueTRY) + "mm at: " + guess.tr.y);
     console.log("brX error: " + (guess.br.x - trueBRX) + "mm at: " + guess.br.x);
 
+    console.log("(" + guess.tl.x + ", " + guess.tl.y + "), (" + guess.tr.x + ", " + guess.tr.y + ")\n (" + guess.bl.x + ", " + guess.bl.y + "), (" + guess.br.x + ", " + guess.br.y + ")"); 
+
 }
 
 
@@ -508,33 +508,73 @@ var initialIndividual = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-const measurementError = 1;
-var measurements = [];
-measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-800,centerY + 400,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-800,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-800,centerY - 400,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY + 400,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY - 400,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 800,centerY + 400,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 800,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 800,centerY - 400,measurementError));
+// const randomMeasurementError = 2;
+// const constantMeasurementError = 2;
+// var measurements = [];
+// measurements.push(takeSimulatedMeasurement(centerX,centerY,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-800,centerY + 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-800,centerY,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-800,centerY - 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX,centerY + 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX,centerY - 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 800,centerY + 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 800,centerY,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 800,centerY - 400,randomMeasurementError, constantMeasurementError));
 
 
 
 
-// var measurements = [
-//     {bl:1676.38,   br:2927.83,   tr:2649.80,   tl:1204.46},
-//     {bl:1378.75,   br:2756.01,   tr:2786.01,   tl:1473.66},
-//     {bl:1135.23,   br:2626.92,   tr:2967.47,   tl:1793.41},
-//     {bl:2227.50,   br:2257.13,   tr:1894.42,   tl:1903.05},
-//     {bl:2019.58,   br:2037.69,   tr:2077.00,   tl:2085.37},
-//     {bl:1861.42,   br:1866.70,   tr:2314.87,   tl:2322.35},
-//     {bl:2913.30,   br:1731.83,   tr:1192.78,   tl:2660.01},
-//     {bl:2750.53,   br:1426.70,   tr:1464.68,   tl:2792.88},
-//     {bl:2633.14,   br:1162.88,   tr:1786.41,   tl:2974.08}
-// ]
-// measurements = projectMeasurements(measurements);
+
+
+
+var measurements = [
+    {bl:1728.27, br:2992.47,   tr:2652.85,  tl:1135.81},
+    {bl:1728.25, br:2990.22,   tr:2652.81,  tl:1135.97},
+    {bl:1728.23, br:2990.65,   tr:2652.84,  tl:1135.97},
+    {bl:1728.30, br:2990.64,   tr:2652.84,  tl:1135.94},
+    {bl:1728.40, br:2990.59,   tr:2652.83,  tl:1135.96},
+    {bl:1404.71, br:2816.61,   tr:2787.61,  tl:1402.47},
+    {bl:1405.44, br:2813.43,   tr:2787.52,  tl:1402.40},
+    {bl:1405.47, br:2813.56,   tr:2787.53,  tl:1402.38},
+    {bl:1405.60, br:2813.42,   tr:2787.55,  tl:1402.44},
+    {bl:1405.55, br:2813.62,   tr:2787.57,  tl:1402.43},
+    {bl:1134.22, br:2684.59,   tr:2971.00,  tl:1720.24},
+    {bl:1134.20, br:2684.68,   tr:2970.99,  tl:1720.23},
+    {bl:1134.30, br:2684.66,   tr:2970.96,  tl:1720.23},
+    {bl:1134.28, br:2684.65,   tr:2970.99,  tl:1720.23},
+    {bl:1134.41, br:2684.62,   tr:2970.96,  tl:1720.23},
+    {bl:2246.86, br:2324.62,   tr:1895.72,  tl:1847.93},
+    {bl:2246.79, br:2324.76,   tr:1895.72,  tl:1847.92},
+    {bl:2246.94, br:2324.66,   tr:1895.72,  tl:1847.92},
+    {bl:2247.06, br:2324.69,   tr:1895.72,  tl:1847.93},
+    {bl:2246.48, br:2324.50,   tr:1895.73,  tl:1847.94},
+    {bl:2014.65, br:2102.55,   tr:2081.65,  tl:2021.86},
+    {bl:2012.13, br:2102.66,   tr:2081.69,  tl:2021.86},
+    {bl:2012.98, br:2102.47,   tr:2081.56,  tl:2021.87},
+    {bl:2012.86, br:2102.29,   tr:2081.61,  tl:2021.84},
+    {bl:2012.96, br:2102.56,   tr:2081.60,  tl:2021.83},
+    {bl:1832.46, br:1926.60,   tr:2321.01,  tl:2253.90},
+    {bl:1832.46, br:1927.85,   tr:2320.99,  tl:2253.90},
+    {bl:1831.91, br:1928.06,   tr:2320.99,  tl:2253.91},
+    {bl:1832.26, br:1928.44,   tr:2320.98,  tl:2253.90},
+    {bl:1831.82, br:1928.16,   tr:2320.98,  tl:2253.92},
+    {bl:2900.94, br:1790.36,   tr:1197.36,  tl:2610.43},
+    {bl:2901.28, br:1790.94,   tr:1197.33,  tl:2610.44},
+    {bl:2901.35, br:1790.87,   tr:1197.32,  tl:2610.43},
+    {bl:2901.31, br:1791.03,   tr:1197.32,  tl:2610.44},
+    {bl:2901.11, br:1790.93,   tr:1197.33,  tl:2610.44},
+    {bl:2718.92, br:1481.98,   tr:1473.30,  tl:2736.15},
+    {bl:2719.16, br:1482.34,   tr:1473.31,  tl:2736.18},
+    {bl:2718.39, br:1481.69,   tr:1473.36,  tl:2736.14},
+    {bl:2718.71, br:1482.15,   tr:1473.32,  tl:2736.15},
+    {bl:2718.88, br:1482.15,   tr:1473.32,  tl:2736.14},
+    {bl:2585.25, br:1223.59,   tr:1796.39,  tl:2911.80},
+    {bl:2585.21, br:1222.97,   tr:1796.40,  tl:2911.78},
+    {bl:2584.99, br:1223.10,   tr:1796.34,  tl:2911.79},
+    {bl:2585.11, br:1222.98,   tr:1796.36,  tl:2911.78},
+    {bl:2585.12, br:1223.07,   tr:1796.39,  tl:2911.81}
+]
+measurements = projectMeasurements(measurements);
 
 computeLinesFitness(measurements, initialIndividual);
 
