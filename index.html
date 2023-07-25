@@ -6,6 +6,7 @@
     <button id="compute-button">Refine Measurments 1x</button>
     <button id="compute-1k-button">1,000x</button>
     <button id="compute-10k-button">10,000x</button>
+    <button id="compute-end-button">End</button>
     <style>
         body {
             margin: 0;
@@ -24,21 +25,18 @@
 <script>
 
 //This is the inital guess for how big the machine is. These numbers are wrong intensionally
-const initialWidth = 700;
-const initialHeight = 400;
-
-//The size of each generation of the population
-const populationSize = 50;
+const initialWidth = 3400;
+const initialHeight = 2200;
 
 
 //These are the true corners of the machine that we want to solve for
-const trueTLX = -5;
-const trueTLY = 410;
-const trueTRX = 708;
-const trueTRY = 385;
+const trueTLX = -21;
+const trueTLY = 2142;
+const trueTRX = 3446;
+const trueTRY = 2217;
 const trueBLX = 0;
 const trueBLY = 0;
-const trueBRX = 710;
+const trueBRX = 3479;
 const trueBRY = 0;
 
 
@@ -54,21 +52,12 @@ const trueBRY = 0;
 
 //This takes in the X and Y cordinates to take a measurement along with the maximum error and
 //returns a simulated measurement at that location. X and Y are referenced to the BL corner.
-//TODO, make this zero centered. So takeSimulatedMeasurement(0,0...) is in the center of the work area
-//TOFIX, This assumes TLY = TRY and generally that the shape is a square which isn't always true
-function takeSimulatedMeasurement(x,y,maxError){
-    const tl = distanceBetweenPoints(trueTLX, trueTLY, x, y) + ((Math.random()*maxError*2) - maxError);
-    const tr = distanceBetweenPoints(trueTRX, trueTRY, x, y) + ((Math.random()*maxError*2) - maxError);
-    const bl = distanceBetweenPoints(trueBLX, trueBLY, x, y) + ((Math.random()*maxError*2) - maxError);
-    const br = distanceBetweenPoints(trueBRX, trueBRY, x, y) + ((Math.random()*maxError*2) - maxError);
+function takeSimulatedMeasurement(x,y,randomError, constantError){
+    const tl = distanceBetweenPoints(trueTLX, trueTLY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
+    const tr = distanceBetweenPoints(trueTRX, trueTRY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
+    const bl = distanceBetweenPoints(trueBLX, trueBLY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
+    const br = distanceBetweenPoints(trueBRX, trueBRY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
     return {tl: tl, tr: tr, bl: bl, br: br};
-}
-
-//Get the end point of the line given the start point, angle, and length
-function getEndPoint(startX, startY, angle, length) {
-  var endX = startX + length * Math.cos(angle);
-  var endY = startY + length * Math.sin(angle);
-  return { x: endX, y: endY };
 }
 
 //Compute the distance between two points
@@ -76,6 +65,13 @@ function distanceBetweenPoints(a, b, c, d) {
   var dx = c - a;
   var dy = d - b;
   return Math.sqrt(dx * dx + dy * dy);
+}
+
+//Get the end point of the line given the start point, angle, and length
+function getEndPoint(startX, startY, angle, length) {
+  var endX = startX + length * Math.cos(angle);
+  var endY = startY + length * Math.sin(angle);
+  return { x: endX, y: endY };
 }
 
 //Computes how close all of the line end points are to eachother
@@ -93,7 +89,7 @@ function computeEndpointFitness(line1, line2, line3, line4){
     return fitness;
 }
 
-//Compute line end point
+//Compute line end point. Returns the line with the end point added
 function computeLineEndPoint(line){
     const end = getEndPoint(line.xBegin, line.yBegin, line.theta, line.length);
     line.xEnd = end.x;
@@ -149,11 +145,26 @@ function walkLines(tlLine, trLine, blLine, brLine, stepSize) {
 //Find the points at the end of the lines that are the closest together
 function magneticallyAttractedLinesFitness(measurement, individual){
 
+    //These set the inital conditions for theta. They don't really mater, they just have to kinda point to the middle of the frame.
+    if(measurement.tlTheta == undefined){
+        measurement.tlTheta = -.3;
+    }
+    if(measurement.trTheta == undefined){
+        measurement.trTheta = 3.5;
+    }
+    if(measurement.blTheta == undefined){
+        measurement.blTheta = .5;
+    }
+    if(measurement.brTheta == undefined){
+        measurement.brTheta = 2.6;
+    }
+
+
     //Define the four lines with starting points and lengths
-    var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: -.3, length: measurement.tl});
-    var trLine = computeLineEndPoint({xBegin: individual.tr.x, yBegin: individual.tr.y, theta: 3.5, length: measurement.tr});
-    var blLine = computeLineEndPoint({xBegin: individual.bl.x, yBegin: individual.bl.y, theta: .5, length: measurement.bl});
-    var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: 2.6, length: measurement.br});
+    var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: measurement.tlTheta, length: measurement.tl});
+    var trLine = computeLineEndPoint({xBegin: individual.tr.x, yBegin: individual.tr.y, theta: measurement.trTheta, length: measurement.tr});
+    var blLine = computeLineEndPoint({xBegin: individual.bl.x, yBegin: individual.bl.y, theta: measurement.blTheta, length: measurement.bl});
+    var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: measurement.brTheta, length: measurement.br});
 
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .1);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .01);
@@ -161,13 +172,20 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0000001);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00000001);
+
+    measurement.tlTheta = tlLine.theta;
+    measurement.trTheta = trLine.theta;
+    measurement.blTheta = blLine.theta;
+    measurement.brTheta = brLine.theta;
 
     //Here we need to evolve the lines to be end closer together
     const finalFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
 
     drawLines(tlLine, trLine, blLine, brLine);
 
-    return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}}; //This should also return the lines so that we can use them for later processing
+    return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}};
 }
 
 //Computes the distance of one line's end point from the center of mass of the other three lines
@@ -268,8 +286,9 @@ function computeLinesFitness(measurements, lastGuess){
 
     //Here is where we need to do the calculation of which line is the most fucked and which direction to move it
     lastGuess = computeFurthestFromCenterOfMass(allLines, lastGuess);
+    lastGuess.fitness = fitness;
 
-    console.log("Fitness: " + 1/fitness)
+    //console.log("Fitness: " + 1/fitness)
 
     return lastGuess;
 }
@@ -281,7 +300,6 @@ function flipY(y) {
 }
 
 function drawLines(line1, line2, line3, line4) {
-
     var canvas = document.getElementById("CursorLayer");
     var ctx = canvas.getContext("2d");
 
@@ -290,37 +308,37 @@ function drawLines(line1, line2, line3, line4) {
 
     // Draw the four lines
     ctx.setLineDash([5, 5]);
-    
+
     ctx.beginPath();
-    ctx.moveTo(line1.xBegin, flipY(line1.yBegin));
-    ctx.lineTo(line1.xEnd, flipY(line1.yEnd));
+    ctx.moveTo(line1.xBegin / 4, flipY(line1.yBegin / 4));
+    ctx.lineTo(line1.xEnd / 4, flipY(line1.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line1.xEnd, flipY(line1.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line1.xEnd / 4, flipY(line1.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(line2.xBegin, flipY(line2.yBegin));
-    ctx.lineTo(line2.xEnd, flipY(line2.yEnd));
+    ctx.moveTo(line2.xBegin / 4, flipY(line2.yBegin / 4));
+    ctx.lineTo(line2.xEnd / 4, flipY(line2.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line2.xEnd, flipY(line2.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line2.xEnd / 4, flipY(line2.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(line3.xBegin, flipY(line3.yBegin));
-    ctx.lineTo(line3.xEnd, flipY(line3.yEnd));
+    ctx.moveTo(line3.xBegin / 4, flipY(line3.yBegin / 4));
+    ctx.lineTo(line3.xEnd / 4, flipY(line3.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line3.xEnd, flipY(line3.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line3.xEnd / 4, flipY(line3.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(line4.xBegin, flipY(line4.yBegin));
-    ctx.lineTo(line4.xEnd, flipY(line4.yEnd));
+    ctx.moveTo(line4.xBegin / 4, flipY(line4.yBegin / 4));
+    ctx.lineTo(line4.xEnd / 4, flipY(line4.yEnd / 4));
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(line4.xEnd, flipY(line4.yEnd), 2, 0, 2 * Math.PI);
+    ctx.arc(line4.xEnd / 4, flipY(line4.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 }
 
@@ -340,11 +358,40 @@ function calculateAverage(array) {
 }
 
 function printResults(guess){
-    console.log("tlX error: " + (guess.tl.x - trueTLX) + "mm");
-    console.log("tlY error: " + (guess.tl.y - trueTLY) + "mm");
-    console.log("trX error: " + (guess.tr.x - trueTRX) + "mm");
-    console.log("trY error: " + (guess.tr.y - trueTRY) + "mm");
-    console.log("blX error: " + (guess.bl.x - trueBLX) + "mm");
+    console.log("tlX error: " + (guess.tl.x - trueTLX) + "mm at: " + guess.tl.x);
+    console.log("tlY error: " + (guess.tl.y - trueTLY) + "mm at: " + guess.tl.y);
+    console.log("trX error: " + (guess.tr.x - trueTRX) + "mm at: " + guess.tr.x);
+    console.log("trY error: " + (guess.tr.y - trueTRY) + "mm at: " + guess.tr.y);
+    console.log("brX error: " + (guess.br.x - trueBRX) + "mm at: " + guess.br.x);
+
+    console.log("(" + guess.tl.x + ", " + guess.tl.y + "), (" + guess.tr.x + ", " + guess.tr.y + ")\n (" + guess.bl.x + ", " + guess.bl.y + "), (" + guess.br.x + ", " + guess.br.y + ")"); 
+
+}
+
+
+function projectMeasurement(measurement){
+    const tlZ = 130;
+    const trZ = 95;
+    const blZ = 71;
+    const brZ = 118;
+
+    const tl = Math.sqrt(Math.pow(measurement.tl,2) - Math.pow(tlZ,2));
+    const tr = Math.sqrt(Math.pow(measurement.tr,2) - Math.pow(trZ,2));
+    const bl = Math.sqrt(Math.pow(measurement.bl,2) - Math.pow(blZ,2));
+    const br = Math.sqrt(Math.pow(measurement.br,2) - Math.pow(brZ,2));
+
+    return {tl: tl, tr: tr, bl: bl, br: br};
+}
+
+
+function projectMeasurements(measurements){
+    var projectedMeasurements = [];
+
+    measurements.forEach(measurement => {
+        projectedMeasurements.push(projectMeasurement(measurement));
+    });
+
+    return projectedMeasurements;
 }
 
 
@@ -378,6 +425,7 @@ compute1kButton.addEventListener('click', () => {
     for(let i = 0; i < 1000; i++){
         clearCanvas();
         initialIndividual = computeLinesFitness(measurements, initialIndividual);
+        console.log("Fitness: " + 1/initialIndividual.fitness);
     }
     printResults(initialIndividual);
 });
@@ -387,10 +435,52 @@ compute10kButton.addEventListener('click', () => {
     for(let i = 0; i < 10000; i++){
         clearCanvas();
         initialIndividual = computeLinesFitness(measurements, initialIndividual);
+        console.log("Fitness: " + 1/initialIndividual.fitness);
     }
     printResults(initialIndividual);
 });
 
+
+const computeEndButton = document.getElementById('compute-end-button');
+computeEndButton.addEventListener('click', () => {
+    var maxFitness = -1;
+    var newFitness = 0;
+
+    var stagnantCounter = 0;
+
+    while(stagnantCounter < 14){
+        maxFitness = newFitness;
+
+        var maxFitnessThisRun = 0;
+        //Run 1,000 steps
+        for(let i = 0; i < 100; i++){
+            clearCanvas();
+            initialIndividual = computeLinesFitness(measurements, initialIndividual);
+            maxFitnessThisRun = Math.max(1/initialIndividual.fitness, maxFitnessThisRun);
+        }
+
+        newFitness = maxFitnessThisRun;
+        console.log("Fitness: " + newFitness);
+
+        if(stagnantCounter > 1){
+            console.log("Stagnant Counter: " + stagnantCounter);
+        }
+
+        if(newFitness <= maxFitness){
+            stagnantCounter++;
+        }
+        else{
+            stagnantCounter = 0;
+        }
+
+
+    }
+
+    console.log("Maxfitness: " + maxFitness);
+    console.log("NewFitness: " + newFitness);
+    
+    printResults(initialIndividual);
+});
 
 
 
@@ -410,24 +500,78 @@ var initialIndividual = {
     tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
     br: {x: initialWidth, y: 0},
-    fitness: 10000
+    fitness: 0
 }
 
-var measurements = [];
+
 
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-const measurementError = 0;
-measurements.push(takeSimulatedMeasurement(centerX,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY + 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX-200,centerY - 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY + 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX,centerY - 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY + 100,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY,measurementError));
-measurements.push(takeSimulatedMeasurement(centerX + 200,centerY - 100,measurementError));
+// const randomMeasurementError = 1;
+// const constantMeasurementError = 7;
+// var measurements = [];
+// measurements.push(takeSimulatedMeasurement(centerX,centerY,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-800,centerY + 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-800,centerY,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX-800,centerY - 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX,centerY + 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX,centerY - 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 800,centerY + 400,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 800,centerY,randomMeasurementError, constantMeasurementError));
+// measurements.push(takeSimulatedMeasurement(centerX + 800,centerY - 400,randomMeasurementError, constantMeasurementError));
+
+
+var measurements = [
+    
+    {bl:1658.49, br:2916.23,   tr:2648.91,  tl:1202.06},
+    {bl:1658.31, br:2916.56,   tr:2648.92,  tl:1202.12},
+    {bl:1658.49, br:2916.37,   tr:2648.92,  tl:1202.41},
+    {bl:1658.35, br:2916.58,   tr:2648.95,  tl:1202.42},
+    {bl:1658.28, br:2916.60,   tr:2648.92,  tl:1201.95},
+    {bl:1360.28, br:2750.03,   tr:2785.86,  tl:1473.83},
+    {bl:1360.93, br:2749.81,   tr:2785.86,  tl:1473.76},
+    {bl:1360.49, br:2749.90,   tr:2785.86,  tl:1473.78},
+    {bl:1360.77, br:2749.96,   tr:2785.86,  tl:1473.77},
+    {bl:1360.58, br:2749.80,   tr:2785.85,  tl:1473.78},
+    {bl:1118.74, br:2625.56,   tr:2967.47,  tl:1793.33},
+    {bl:1118.82, br:2625.81,   tr:2967.51,  tl:1793.33},
+    {bl:1118.64, br:2625.82,   tr:2967.51,  tl:1793.33},
+    {bl:1118.61, br:2625.69,   tr:2967.52,  tl:1793.33},
+    {bl:1118.70, br:2625.64,   tr:2967.53,  tl:1793.33},
+    {bl:2208.86, br:2240.36,   tr:1894.49,  tl:1902.96},
+    {bl:2209.02, br:2240.19,   tr:1894.49,  tl:1902.97},
+    {bl:2208.93, br:2240.68,   tr:1894.48,  tl:1902.96},
+    {bl:2209.02, br:2240.39,   tr:1894.48,  tl:1902.97},
+    {bl:2209.04, br:2240.87,   tr:1894.48,  tl:1902.96},
+    {bl:2006.21, br:2025.53,   tr:2077.02,  tl:2085.25},
+    {bl:2004.39, br:2025.69,   tr:2077.01,  tl:2085.23},
+    {bl:2004.34, br:2025.95,   tr:2076.96,  tl:2085.23},
+    {bl:2004.06, br:2025.86,   tr:2076.99,  tl:2085.23},
+    {bl:2004.35, br:2025.89,   tr:2076.99,  tl:2085.23},
+    {bl:1845.54, br:1856.83,   tr:2314.80,  tl:2322.43},
+    {bl:1846.92, br:1856.90,   tr:2314.83,  tl:2322.40},
+    {bl:1846.91, br:1856.82,   tr:2314.82,  tl:2322.40},
+    {bl:1846.86, br:1857.05,   tr:2314.81,  tl:2322.39},
+    {bl:1847.30, br:1857.28,   tr:2314.82,  tl:2322.40},
+    {bl:2900.46, br:1711.60,   tr:1192.62,  tl:2659.92},
+    {bl:2900.27, br:1711.58,   tr:1192.63,  tl:2659.92},
+    {bl:2900.54, br:1711.68,   tr:1192.63,  tl:2659.92},
+    {bl:2900.09, br:1711.57,   tr:1192.64,  tl:2659.92},
+    {bl:2900.43, br:1711.63,   tr:1192.64,  tl:2659.92},
+    {bl:2894.66, br:1409.08,   tr:1464.72,  tl:2792.91},
+    {bl:2741.27, br:1408.97,   tr:1464.81,  tl:2792.80},
+    {bl:2741.40, br:1409.55,   tr:1464.75,  tl:2792.81},
+    {bl:2741.26, br:1409.75,   tr:1464.75,  tl:2792.81},
+    {bl:2741.29, br:1409.83,   tr:1464.75,  tl:2792.81},
+    {bl:2624.32, br:1150.34,   tr:1786.43,  tl:2974.04},
+    {bl:2624.57, br:1150.13,   tr:1786.40,  tl:2974.02},
+    {bl:2624.75, br:1150.32,   tr:1786.41,  tl:2974.02},
+    {bl:2624.70, br:1150.29,   tr:1786.41,  tl:2974.01},
+    {bl:2624.65, br:1150.34,   tr:1786.41,  tl:2974.01},
+    
+]
+measurements = projectMeasurements(measurements);
 
 computeLinesFitness(measurements, initialIndividual);
 
