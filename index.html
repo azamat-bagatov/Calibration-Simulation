@@ -25,18 +25,18 @@
 <script>
 
 //This is the inital guess for how big the machine is. These numbers are wrong intensionally
-const initialWidth = 3400;
-const initialHeight = 2200;
+const initialWidth = 3048 + 12;
+const initialHeight = 2200 - 14;
 
 
 //These are the true corners of the machine that we want to solve for
 const trueTLX = -21;
 const trueTLY = 2142;
-const trueTRX = 3446;
+const trueTRX = 3046;
 const trueTRY = 2217;
 const trueBLX = 0;
 const trueBLY = 0;
-const trueBRX = 3479;
+const trueBRX = 3049;
 const trueBRY = 0;
 
 
@@ -284,11 +284,11 @@ function computeLinesFitness(measurements, lastGuess){
     
     const fitness = calculateAverage(fitnesses);
 
+    console.log(fitnesses);
+
     //Here is where we need to do the calculation of which line is the most fucked and which direction to move it
     lastGuess = computeFurthestFromCenterOfMass(allLines, lastGuess);
     lastGuess.fitness = fitness;
-
-    //console.log("Fitness: " + 1/fitness)
 
     return lastGuess;
 }
@@ -368,12 +368,12 @@ function printResults(guess){
 
 }
 
-
+//Projects the measurements to the plane of the machine
 function projectMeasurement(measurement){
-    const tlZ = 130;
-    const trZ = 95;
-    const blZ = 71;
-    const brZ = 118;
+    const tlZ = 103;
+    const trZ = 63;
+    const blZ = 40;
+    const brZ = 89;
 
     const tl = Math.sqrt(Math.pow(measurement.tl,2) - Math.pow(tlZ,2));
     const tr = Math.sqrt(Math.pow(measurement.tr,2) - Math.pow(trZ,2));
@@ -383,7 +383,8 @@ function projectMeasurement(measurement){
     return {tl: tl, tr: tr, bl: bl, br: br};
 }
 
-
+//Projects an array of measurements to the plane of the machine to account for the fact 
+//that the start and end point are not in the same plane
 function projectMeasurements(measurements){
     var projectedMeasurements = [];
 
@@ -392,6 +393,70 @@ function projectMeasurements(measurements){
     });
 
     return projectedMeasurements;
+}
+
+//Adds a constant to each measurement
+function offsetMeasurements(measurements, offset) {
+    const newMeasurements = measurements.map(measurement => {
+        return {
+            tl: measurement.tl + offset,
+            tr: measurement.tr + offset,
+            bl: measurement.bl + offset,
+            br: measurement.br + offset
+        };
+    });
+
+    return newMeasurements;
+}
+
+//Scales each measurement by a constant
+function scaleMeasurements(measurements, scale) {
+    const newMeasurements = measurements.map(measurement => {
+        return {
+            tl: measurement.tl * scale,
+            tr: measurement.tr * scale,
+            bl: measurement.bl * scale,
+            br: measurement.br * scale
+        };
+    });
+
+    return newMeasurements;
+}
+
+function findMaxFitness(initialIndividual, measurements) {
+    var maxFitness = -1;
+    var newFitness = 0;
+    var stagnantCounter = 0;
+
+    while (stagnantCounter < 14) {
+        maxFitness = newFitness;
+
+        var maxFitnessThisRun = 0;
+        //Run 1,000 steps
+        for (let i = 0; i < 100; i++) {
+            clearCanvas();
+            initialIndividual = computeLinesFitness(measurements, initialIndividual);
+            maxFitnessThisRun = Math.max(1 / initialIndividual.fitness, maxFitnessThisRun);
+        }
+
+        newFitness = maxFitnessThisRun;
+        console.log("Fitness: " + newFitness);
+
+        if (stagnantCounter > 1) {
+            console.log("Stagnant Counter: " + stagnantCounter);
+        }
+
+        if (newFitness <= maxFitness) {
+            stagnantCounter++;
+        } else {
+            stagnantCounter = 0;
+        }
+    }
+
+    console.log("Maxfitness: " + maxFitness);
+    console.log("NewFitness: " + newFitness);
+
+    return initialIndividual;
 }
 
 
@@ -443,43 +508,10 @@ compute10kButton.addEventListener('click', () => {
 
 const computeEndButton = document.getElementById('compute-end-button');
 computeEndButton.addEventListener('click', () => {
-    var maxFitness = -1;
-    var newFitness = 0;
 
-    var stagnantCounter = 0;
+    var result = findMaxFitness(initialIndividual, measurements);
 
-    while(stagnantCounter < 14){
-        maxFitness = newFitness;
-
-        var maxFitnessThisRun = 0;
-        //Run 1,000 steps
-        for(let i = 0; i < 100; i++){
-            clearCanvas();
-            initialIndividual = computeLinesFitness(measurements, initialIndividual);
-            maxFitnessThisRun = Math.max(1/initialIndividual.fitness, maxFitnessThisRun);
-        }
-
-        newFitness = maxFitnessThisRun;
-        console.log("Fitness: " + newFitness);
-
-        if(stagnantCounter > 1){
-            console.log("Stagnant Counter: " + stagnantCounter);
-        }
-
-        if(newFitness <= maxFitness){
-            stagnantCounter++;
-        }
-        else{
-            stagnantCounter = 0;
-        }
-
-
-    }
-
-    console.log("Maxfitness: " + maxFitness);
-    console.log("NewFitness: " + newFitness);
-    
-    printResults(initialIndividual);
+    printResults(result);
 });
 
 
@@ -508,8 +540,8 @@ var initialIndividual = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-// const randomMeasurementError = 1;
-// const constantMeasurementError = 7;
+// const randomMeasurementError = 6;
+// const constantMeasurementError = 3;
 // var measurements = [];
 // measurements.push(takeSimulatedMeasurement(centerX,centerY,randomMeasurementError, constantMeasurementError));
 // measurements.push(takeSimulatedMeasurement(centerX-800,centerY + 400,randomMeasurementError, constantMeasurementError));
@@ -522,55 +554,47 @@ const centerY = initialHeight/2;
 // measurements.push(takeSimulatedMeasurement(centerX + 800,centerY - 400,randomMeasurementError, constantMeasurementError));
 
 
+
 var measurements = [
-    
-    {bl:1658.49, br:2916.23,   tr:2648.91,  tl:1202.06},
-    {bl:1658.31, br:2916.56,   tr:2648.92,  tl:1202.12},
-    {bl:1658.49, br:2916.37,   tr:2648.92,  tl:1202.41},
-    {bl:1658.35, br:2916.58,   tr:2648.95,  tl:1202.42},
-    {bl:1658.28, br:2916.60,   tr:2648.92,  tl:1201.95},
-    {bl:1360.28, br:2750.03,   tr:2785.86,  tl:1473.83},
-    {bl:1360.93, br:2749.81,   tr:2785.86,  tl:1473.76},
-    {bl:1360.49, br:2749.90,   tr:2785.86,  tl:1473.78},
-    {bl:1360.77, br:2749.96,   tr:2785.86,  tl:1473.77},
-    {bl:1360.58, br:2749.80,   tr:2785.85,  tl:1473.78},
-    {bl:1118.74, br:2625.56,   tr:2967.47,  tl:1793.33},
-    {bl:1118.82, br:2625.81,   tr:2967.51,  tl:1793.33},
-    {bl:1118.64, br:2625.82,   tr:2967.51,  tl:1793.33},
-    {bl:1118.61, br:2625.69,   tr:2967.52,  tl:1793.33},
-    {bl:1118.70, br:2625.64,   tr:2967.53,  tl:1793.33},
-    {bl:2208.86, br:2240.36,   tr:1894.49,  tl:1902.96},
-    {bl:2209.02, br:2240.19,   tr:1894.49,  tl:1902.97},
-    {bl:2208.93, br:2240.68,   tr:1894.48,  tl:1902.96},
-    {bl:2209.02, br:2240.39,   tr:1894.48,  tl:1902.97},
-    {bl:2209.04, br:2240.87,   tr:1894.48,  tl:1902.96},
-    {bl:2006.21, br:2025.53,   tr:2077.02,  tl:2085.25},
-    {bl:2004.39, br:2025.69,   tr:2077.01,  tl:2085.23},
-    {bl:2004.34, br:2025.95,   tr:2076.96,  tl:2085.23},
-    {bl:2004.06, br:2025.86,   tr:2076.99,  tl:2085.23},
-    {bl:2004.35, br:2025.89,   tr:2076.99,  tl:2085.23},
-    {bl:1845.54, br:1856.83,   tr:2314.80,  tl:2322.43},
-    {bl:1846.92, br:1856.90,   tr:2314.83,  tl:2322.40},
-    {bl:1846.91, br:1856.82,   tr:2314.82,  tl:2322.40},
-    {bl:1846.86, br:1857.05,   tr:2314.81,  tl:2322.39},
-    {bl:1847.30, br:1857.28,   tr:2314.82,  tl:2322.40},
-    {bl:2900.46, br:1711.60,   tr:1192.62,  tl:2659.92},
-    {bl:2900.27, br:1711.58,   tr:1192.63,  tl:2659.92},
-    {bl:2900.54, br:1711.68,   tr:1192.63,  tl:2659.92},
-    {bl:2900.09, br:1711.57,   tr:1192.64,  tl:2659.92},
-    {bl:2900.43, br:1711.63,   tr:1192.64,  tl:2659.92},
-    {bl:2894.66, br:1409.08,   tr:1464.72,  tl:2792.91},
-    {bl:2741.27, br:1408.97,   tr:1464.81,  tl:2792.80},
-    {bl:2741.40, br:1409.55,   tr:1464.75,  tl:2792.81},
-    {bl:2741.26, br:1409.75,   tr:1464.75,  tl:2792.81},
-    {bl:2741.29, br:1409.83,   tr:1464.75,  tl:2792.81},
-    {bl:2624.32, br:1150.34,   tr:1786.43,  tl:2974.04},
-    {bl:2624.57, br:1150.13,   tr:1786.40,  tl:2974.02},
-    {bl:2624.75, br:1150.32,   tr:1786.41,  tl:2974.02},
-    {bl:2624.70, br:1150.29,   tr:1786.41,  tl:2974.01},
-    {bl:2624.65, br:1150.34,   tr:1786.41,  tl:2974.01},
-    
-]
+
+{bl:1643.64,   br:2908.26,   tr:2645.42,   tl:1195.37},
+{bl:1643.74,   br:2908.27,   tr:2645.44,   tl:1195.38},
+{bl:1643.73,   br:2908.16,   tr:2645.42,   tl:1195.39},
+{bl:1643.67,   br:2908.60,   tr:2645.46,   tl:1195.34},
+{bl:1339.55,   br:2741.42,   tr:2783.55,   tl:1471.29},
+{bl:1339.83,   br:2741.76,   tr:2783.59,   tl:1471.24},
+{bl:1339.84,   br:2741.68,   tr:2783.59,   tl:1471.25},
+{bl:1339.90,   br:2741.69,   tr:2783.59,   tl:1471.24},
+{bl:1094.04,   br:2624.35,   tr:2965.35,   tl:1792.05},
+{bl:1094.00,   br:2624.34,   tr:2965.32,   tl:1792.03},
+{bl:1094.11,   br:2624.32,   tr:2965.32,   tl:1792.03},
+{bl:1094.22,   br:2624.25,   tr:2965.34,   tl:1792.06},
+{bl:2192.32,   br:2225.46,   tr:1892.18,   tl:1900.65},
+{bl:2192.29,   br:2225.50,   tr:1892.21,   tl:1900.68},
+{bl:2192.33,   br:2225.16,   tr:1892.19,   tl:1900.65},
+{bl:2192.14,   br:2225.35,   tr:1892.16,   tl:1900.61},
+{bl:1984.49,   br:2011.66,   tr:2074.89,   tl:2083.18},
+{bl:1984.48,   br:2011.75,   tr:2074.89,   tl:2083.18},
+{bl:1984.44,   br:2011.45,   tr:2074.89,   tl:2083.18},
+{bl:1984.66,   br:2011.77,   tr:2074.93,   tl:2083.17},
+{bl:1829.05,   br:1851.78,   tr:2312.87,   tl:2320.55},
+{bl:1828.68,   br:1851.68,   tr:2312.85,   tl:2320.54},
+{bl:1828.73,   br:1851.85,   tr:2312.87,   tl:2320.56},
+{bl:1828.68,   br:1851.81,   tr:2312.83,   tl:2320.55},
+{bl:2878.78,   br:1676.99,   tr:1190.41,   tl:2657.65},
+{bl:2879.06,   br:1677.07,   tr:1190.30,   tl:2657.62},
+{bl:2878.91,   br:1677.05,   tr:1190.31,   tl:2657.59},
+{bl:2878.82,   br:1677.05,   tr:1190.31,   tl:2657.60},
+{bl:2719.77,   br:1380.42,   tr:1463.50,   tl:2790.45},
+{bl:2719.69,   br:1380.29,   tr:1463.49,   tl:2790.48},
+{bl:2719.73,   br:1380.06,   tr:1463.49,   tl:2790.52},
+{bl:2719.74,   br:1380.19,   tr:1463.50,   tl:2790.46},
+{bl:2610.12,   br:1125.64,   tr:1785.01,   tl:2971.84},
+{bl:2610.01,   br:1125.91,   tr:1785.01,   tl:2971.88},
+{bl:2609.97,   br:1126.02,   tr:1784.97,   tl:2971.84},
+{bl:2609.99,   br:1126.06,   tr:1785.01,   tl:2971.83},
+
+];
 measurements = projectMeasurements(measurements);
 
 computeLinesFitness(measurements, initialIndividual);
