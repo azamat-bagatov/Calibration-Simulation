@@ -40,18 +40,26 @@ const trueBRX = 3034.960970894897;
 const trueBRY = 0;
 
 
+/**------------------------------------Intro------------------------------------
+*
+*   If you are reading this code to understand it then I would recommend starting
+*  at the bottom of the page and working your way up. The code is written in a
+* functional style so the function definitions are at the top and the code that
+* actually runs is at the bottom. It was also written quickly and modified a lot
+* so it is not very clean. I apologize for that.
+*
+*------------------------------------------------------------------------------
+*/
 
-// const measurements = [
-//     {tl: 748.604, tr: 2472.067, bl: 1426.493, br: 2764.56},
-//     {tl: 2372.21, tr: 1149.968, bl: 2436.423, br: 1238.632},
-//     {tl: 2087.219, tr: 1898.011, bl: 1714.555, br: 1452.135},
-//     {tl: 2847.807, tr: 1492.287, bl: 2543.025, br: 658.01},
-//     {tl: 1832.44, tr: 2724.18, bl: 846.658, br: 2179.185},
-//     {tl: 2068.196, tr: 1496.784, bl: 2043.238, br: 1437.005}
-// ]
 
-//This takes in the X and Y cordinates to take a measurement along with the maximum error and
-//returns a simulated measurement at that location. X and Y are referenced to the BL corner.
+/**
+ * Simulates a measurement at a given location with random and constant errors.
+ * @param {number} x - The x-coordinate of the location to measure.
+ * @param {number} y - The y-coordinate of the location to measure.
+ * @param {number} randomError - The maximum amount of random error to add to the measurement.
+ * @param {number} constantError - The constant error to add to the measurement.
+ * @returns {Object} - An object containing the simulated measurements at the given location.
+ */
 function takeSimulatedMeasurement(x,y,randomError, constantError){
     const tl = distanceBetweenPoints(trueTLX, trueTLY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
     const tr = distanceBetweenPoints(trueTRX, trueTRY, x, y) + ((Math.random()*randomError*2) - randomError) + constantError;
@@ -60,21 +68,42 @@ function takeSimulatedMeasurement(x,y,randomError, constantError){
     return {tl: tl, tr: tr, bl: bl, br: br};
 }
 
-//Compute the distance between two points
+/**
+ * Computes the distance between two points.
+ * @param {number} a - The x-coordinate of the first point.
+ * @param {number} b - The y-coordinate of the first point.
+ * @param {number} c - The x-coordinate of the second point.
+ * @param {number} d - The y-coordinate of the second point.
+ * @returns {number} - The distance between the two points.
+ */
 function distanceBetweenPoints(a, b, c, d) {
   var dx = c - a;
   var dy = d - b;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-//Get the end point of the line given the start point, angle, and length
+/**
+ * Computes the end point of a line based on its starting point, angle, and length.
+ * @param {number} startX - The x-coordinate of the line's starting point.
+ * @param {number} startY - The y-coordinate of the line's starting point.
+ * @param {number} angle - The angle of the line in radians.
+ * @param {number} length - The length of the line.
+ * @returns {Object} - An object containing the x and y coordinates of the line's end point.
+ */
 function getEndPoint(startX, startY, angle, length) {
   var endX = startX + length * Math.cos(angle);
   var endY = startY + length * Math.sin(angle);
   return { x: endX, y: endY };
 }
 
-//Computes how close all of the line end points are to eachother
+/**
+ * Computes how close all of the line end points are to each other.
+ * @param {Object} line1 - The first line to compare.
+ * @param {Object} line2 - The second line to compare.
+ * @param {Object} line3 - The third line to compare.
+ * @param {Object} line4 - The fourth line to compare.
+ * @returns {number} - The fitness value, which is the average distance between all line end points.
+ */
 function computeEndpointFitness(line1, line2, line3, line4){
 
     const a = distanceBetweenPoints(line1.xEnd, line1.yEnd, line2.xEnd, line2.yEnd);
@@ -89,7 +118,11 @@ function computeEndpointFitness(line1, line2, line3, line4){
     return fitness;
 }
 
-//Compute line end point. Returns the line with the end point added
+/**
+ * Computes the end point of a line based on its starting point, angle, and length.
+ * @param {Object} line - The line to compute the end point for.
+ * @returns {Object} - The line with the end point added.
+ */
 function computeLineEndPoint(line){
     const end = getEndPoint(line.xBegin, line.yBegin, line.theta, line.length);
     line.xEnd = end.x;
@@ -97,7 +130,15 @@ function computeLineEndPoint(line){
     return line;
 }
 
-//Walk lines sucessively until no change is made
+/**
+ * Walks the four lines in the given set, adjusting their endpoints to minimize the distance between them.
+ * @param {Object} tlLine - The top-left line in the set.
+ * @param {Object} trLine - The top-right line in the set.
+ * @param {Object} blLine - The bottom-left line in the set.
+ * @param {Object} brLine - The bottom-right line in the set.
+ * @param {number} stepSize - The amount to adjust the angle of each line by on each iteration.
+ * @returns {Object} - An object containing the final positions of each line.
+ */
 function walkLines(tlLine, trLine, blLine, brLine, stepSize) {
   let changeMade = true;
   let bestFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
@@ -142,7 +183,12 @@ function walkLines(tlLine, trLine, blLine, brLine, stepSize) {
   return { tlLine, trLine, blLine, brLine };
 }
 
-//Find the points at the end of the lines that are the closest together
+/**
+ * Computes the fitness of a set of lines based on how close their endpoints are to each other.
+ * @param {Object} measurement - An object containing the initial theta values and lengths for each line.
+ * @param {Object} individual - An object containing the x and y coordinates for each line's starting point.
+ * @returns {Object} - An object containing the fitness value and the final positions of each line.
+ */
 function magneticallyAttractedLinesFitness(measurement, individual){
 
     //These set the inital conditions for theta. They don't really mater, they just have to kinda point to the middle of the frame.
@@ -188,7 +234,14 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}};
 }
 
-//Computes the distance of one line's end point from the center of mass of the other three lines
+/**
+ * Computes the distance of one line's end point from the center of mass of the other three lines.
+ * @param {Object} lineToCompare - The line to compute the distance for.
+ * @param {Object} line2 - The second line to use in computing the center of mass.
+ * @param {Object} line3 - The third line to use in computing the center of mass.
+ * @param {Object} line4 - The fourth line to use in computing the center of mass.
+ * @returns {Object} - An object containing the x and y distances from the center of mass.
+ */
 function computeDistanceFromCenterOfMass(lineToCompare, line2, line3, line4){
 
     //Compute the center of mass
@@ -198,7 +251,11 @@ function computeDistanceFromCenterOfMass(lineToCompare, line2, line3, line4){
     return {x: lineToCompare.xEnd - x, y: lineToCompare.yEnd - y};
 }
 
-//Compute the distances from the center of mass for four lines and converts them into the relivant variables that we can tweak
+/**
+ * Computes the distances from the center of mass for four lines and converts them into the relevant variables that we can tweak.
+ * @param {Object} lines - An object containing four lines to compute the distances from the center of mass for.
+ * @returns {Object} - An object containing the distances from the center of mass for tlX, tlY, trX, trY, and brX.
+ */
 function generateTweaks(lines){
     //We care about the distances for tlX, tlY, trX, trY, brX
 
@@ -211,7 +268,12 @@ function generateTweaks(lines){
     return {tlX: tlX, tly: tlY, trX: trX, trY: trY, brX: brX};
 }
 
-//Computes all of the tweaks and summarizes them
+/**
+ * Computes all of the tweaks and summarizes them to move the guess furthest from the center of mass of the lines.
+ * @param {Array} lines - An array of lines to compute the tweaks for.
+ * @param {Object} lastGuess - The last guess made by the algorithm.
+ * @returns {Object} - The updated guess with the furthest tweaks applied.
+ */
 function computeFurthestFromCenterOfMass(lines, lastGuess){
 
     var tlX = 0;
@@ -271,6 +333,12 @@ function computeFurthestFromCenterOfMass(lines, lastGuess){
     return lastGuess;
 }
 
+/**
+ * Computes the fitness of a guess for a set of measurements by comparing the guess to magnetically attracted lines.
+ * @param {Array} measurements - An array of measurements to compare the guess to.
+ * @param {Object} lastGuess - The last guess made by the algorithm.
+ * @returns {Object} - An object containing the fitness of the guess and the lines used to calculate the fitness.
+ */
 function computeLinesFitness(measurements, lastGuess){
     var fitnesses = [];
     var allLines = [];
@@ -282,23 +350,36 @@ function computeLinesFitness(measurements, lastGuess){
         allLines.push(lines);
     });
     
+    //Computes the average fitness of all of the measurements
     const fitness = calculateAverage(fitnesses);
 
-    console.log(fitnesses);
+    //console.log(fitnesses);
 
-    //Here is where we need to do the calculation of which line is the most fucked and which direction to move it
+    //Here is where we need to do the calculation of which corner is the worst and which direction to move it
     lastGuess = computeFurthestFromCenterOfMass(allLines, lastGuess);
     lastGuess.fitness = fitness;
 
     return lastGuess;
 }
 
-//Used for blipping y values because the canvas naturally has y at the top
+/**
+ * Flips the y-coordinate of a point to account for the canvas having y at the top.
+ * @param {number} y - The y-coordinate to flip.
+ * @returns {number} - The flipped y-coordinate.
+ */
 function flipY(y) {
   var canvas = document.getElementById("CursorLayer");
   return canvas.height - y;
 }
 
+/**
+ * Draws four lines on a canvas element and adds a circle at the end of each line.
+ * @param {Object} line1 - An object containing the x and y coordinates of the beginning and end of the first line.
+ * @param {Object} line2 - An object containing the x and y coordinates of the beginning and end of the second line.
+ * @param {Object} line3 - An object containing the x and y coordinates of the beginning and end of the third line.
+ * @param {Object} line4 - An object containing the x and y coordinates of the beginning and end of the fourth line.
+ * @returns {void}
+ */
 function drawLines(line1, line2, line3, line4) {
     var canvas = document.getElementById("CursorLayer");
     var ctx = canvas.getContext("2d");
@@ -344,7 +425,11 @@ function drawLines(line1, line2, line3, line4) {
 
 
 
-//Takes an array of numbers and returns the average
+/**
+ * Calculates the average of an array of numbers.
+ * @param {number[]} array - The array of numbers to calculate the average of.
+ * @returns {number} - The average of the array.
+ */
 function calculateAverage(array) {
     var total = 0;
     var count = 0;
@@ -357,6 +442,12 @@ function calculateAverage(array) {
     return total / count;
 }
 
+/**
+ * Prints the difference between the real values and the computed values for the corners. Only useful when using simulated
+ * measurements.
+ * @param {Object} guess - An object containing the x and y coordinates of the top left, top right, bottom left, and bottom right corners of a trapazoid.
+ * @returns {void}
+ */
 function printResults(guess){
     console.log("tlX error: " + (guess.tl.x - trueTLX) + "mm at: " + guess.tl.x);
     console.log("tlY error: " + (guess.tl.y - trueTLY) + "mm at: " + guess.tl.y);
@@ -368,7 +459,12 @@ function printResults(guess){
 
 }
 
-//Projects the measurements to the plane of the machine
+/**
+ * Projects the measurements to the plane of the machine. This is needed
+ * because the belts are not parallel to the surface of the machine.
+ * @param {Object} measurement - An object containing the measurements
+ * @returns {Object} - An object containing the projected measurements
+ */
 function projectMeasurement(measurement){
     const tlZ = 116;
     const trZ = 69;
@@ -383,8 +479,11 @@ function projectMeasurement(measurement){
     return {tl: tl, tr: tr, bl: bl, br: br};
 }
 
-//Projects an array of measurements to the plane of the machine to account for the fact 
-//that the start and end point are not in the same plane
+/**
+ * Projects an array of measurements to the plane of the machine to account for the fact that the start and end point are not in the same plane.
+ * @param {Object[]} measurements - An array of objects containing the measurements of the top left, top right, bottom left, and bottom right corners of a rectangle.
+ * @returns {Object[]} - An array of objects containing the projected measurements of the top left, top right, bottom left, and bottom right corners of a rectangle.
+ */
 function projectMeasurements(measurements){
     var projectedMeasurements = [];
 
@@ -395,7 +494,12 @@ function projectMeasurements(measurements){
     return projectedMeasurements;
 }
 
-//Adds a constant to each measurement
+/**
+ * Adds a constant to each measurement in an array of measurements.
+ * @param {Object[]} measurements - An array of objects containing the measurements of the top left, top right, bottom left, and bottom right corners of a rectangle.
+ * @param {number} offset - The constant to add to each measurement.
+ * @returns {Object[]} - An array of objects containing the updated measurements of the top left, top right, bottom left, and bottom right corners of a rectangle.
+ */
 function offsetMeasurements(measurements, offset) {
     const newMeasurements = measurements.map(measurement => {
         return {
@@ -409,7 +513,12 @@ function offsetMeasurements(measurements, offset) {
     return newMeasurements;
 }
 
-//Scales each measurement by a constant
+/**
+ * Scales each measurement in an array of measurements by a constant. 
+ * @param {Object[]} measurements - An array of objects containing the measurements of the top left, top right, bottom left, and bottom right corners of a rectangle.
+ * @param {number} scale - The constant to multiply each measurement by.
+ * @returns {Object[]} - An array of objects containing the updated measurements of the top left, top right, bottom left, and bottom right corners of a rectangle.
+ */
 function scaleMeasurements(measurements, scale) {
     const newMeasurements = measurements.map(measurement => {
         return {
@@ -462,7 +571,7 @@ function findMaxFitness(initialIndividual, measurements) {
 
 
 
-
+//Creates the canvas on which the pattern will be drawn
 var canvas = document.createElement('canvas');
 canvas.id     = "CursorLayer";
 canvas.width  = 1000;
@@ -470,7 +579,7 @@ canvas.height = 600;
 canvas.style.border   = "1px solid";
 document.getElementById("views").appendChild(canvas);
 
-// Define the clearCanvas function here 
+//Deletes everything from the canvas
 function clearCanvas() {
     const canvas = document.getElementById('CursorLayer');
     const context = canvas.getContext('2d');
@@ -482,9 +591,11 @@ const computeButton = document.getElementById('compute-button');
 computeButton.addEventListener('click', () => {
     clearCanvas();
     initialIndividual = computeLinesFitness(measurements, initialIndividual);
-    printResults(initialIndividual);
+    //printResults(initialIndividual);
 });
 
+
+//Create the buttons that the user can click
 const compute1kButton = document.getElementById('compute-1k-button');
 compute1kButton.addEventListener('click', () => {
     for(let i = 0; i < 1000; i++){
@@ -492,7 +603,7 @@ compute1kButton.addEventListener('click', () => {
         initialIndividual = computeLinesFitness(measurements, initialIndividual);
         console.log("Fitness: " + 1/initialIndividual.fitness);
     }
-    printResults(initialIndividual);
+    //printResults(initialIndividual);
 });
 
 const compute10kButton = document.getElementById('compute-10k-button');
@@ -502,7 +613,7 @@ compute10kButton.addEventListener('click', () => {
         initialIndividual = computeLinesFitness(measurements, initialIndividual);
         console.log("Fitness: " + 1/initialIndividual.fitness);
     }
-    printResults(initialIndividual);
+    //printResults(initialIndividual);
 });
 
 
@@ -511,7 +622,7 @@ computeEndButton.addEventListener('click', () => {
 
     var result = findMaxFitness(initialIndividual, measurements);
 
-    printResults(result);
+    //printResults(result);
 });
 
 
@@ -539,6 +650,9 @@ var initialIndividual = {
 
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
+
+
+//Un-comment this code to use the simulated measurements
 
 // const randomMeasurementError = 6;
 // const constantMeasurementError = 3;
