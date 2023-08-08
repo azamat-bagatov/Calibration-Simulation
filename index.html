@@ -229,7 +229,7 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     //Here we need to evolve the lines to be end closer together
     const finalFitness = computeEndpointFitness(tlLine, trLine, blLine, brLine);
 
-    drawLines(tlLine, trLine, blLine, brLine);
+    drawLines(tlLine, trLine, blLine, brLine, individual);
 
     return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}};
 }
@@ -362,6 +362,52 @@ function computeLinesFitness(measurements, lastGuess){
     return lastGuess;
 }
 
+
+
+function calculateTensions(x, y, guess) {
+    let Xtl = guess.tl.x;
+    let Ytl = guess.tl.y;
+    let Xtr = guess.tr.x;
+    let Ytr = guess.tr.y;
+    let Xbl = guess.bl.x;
+    let Ybl = guess.bl.y;
+    let Xbr = guess.br.x;
+    let Ybr = guess.br.y;
+
+    let mass = 5.0;
+    const G_CONSTANT = 9.80665;
+    let alpha = 0.26;
+    let TL, TR;
+  
+    let A, C, sinD, cosD, sinE, cosE;
+    let Fx, Fy;
+
+    A = (Xtl - x) / (Ytl - y);
+    C = (Xtr - x) / (Ytr - y);
+    A = Math.abs(A);
+    C = Math.abs(C);
+    sinD = x / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    cosD = y / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    sinE = Math.abs(Xbr - x) / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
+    cosE = y / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
+
+    Fx = Ybr * sinE - Ybl * sinD;
+    Fy = Ybr * cosE + Ybl * cosD + mass * G_CONSTANT * Math.cos(alpha);
+    // console.log(`Fx = ${Fx.toFixed(1)}, Fy = ${Fy.toFixed(1)}`);
+
+    let TLy = (Fx + C * Fy) / (A + C);
+    let TRy = Fy - TLy;
+    let TRx = C * (Fy - TLy);
+    let TLx = A * TLy;
+
+    // console.log(`TLy = ${TLy.toFixed(1)}, TRy = ${TRy.toFixed(1)}, TRx = ${TRx.toFixed(1)}, TLx = ${TLx.toFixed(1)}`);
+
+    TL = Math.sqrt(Math.pow(TLx, 2) + Math.pow(TLy, 2));
+    TR = Math.sqrt(Math.pow(TRx, 2) + Math.pow(TRy, 2));
+
+    return { TL, TR };
+}
+
 /**
  * Flips the y-coordinate of a point to account for the canvas having y at the top.
  * @param {number} y - The y-coordinate to flip.
@@ -372,6 +418,20 @@ function flipY(y) {
   return canvas.height - y;
 }
 
+function changeStrokeStyle(inputValue) {
+  const green = [0, 128, 0]; // RGB values for green
+  const red = [255, 0, 0]; // RGB values for red
+  const range = 60 - 20; // Range of input values
+  const increment = (red.map((value, index) => value - green[index])).map(value => value / range); // Increment for each RGB value
+
+  const color = green.map((value, index) => Math.round(value + increment[index] * (inputValue - 20))); // Calculate the color based on the input value
+
+  const canvas = document.getElementById("CursorLayer");
+  const ctx = canvas.getContext("2d");
+
+  ctx.strokeStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`; // Set the strokeStyle to the calculated color
+}
+
 /**
  * Draws four lines on a canvas element and adds a circle at the end of each line.
  * @param {Object} line1 - An object containing the x and y coordinates of the beginning and end of the first line.
@@ -380,16 +440,21 @@ function flipY(y) {
  * @param {Object} line4 - An object containing the x and y coordinates of the beginning and end of the fourth line.
  * @returns {void}
  */
-function drawLines(line1, line2, line3, line4) {
+function drawLines(line1, line2, line3, line4, guess) {
+
+    //Compute the tensions in the upper two belts
+    const { TL, TR } = calculateTensions(line1.xEnd, line1.yEnd, guess); //This assumes the ends are in the same place which they aren't at first
+    console.log(TL);
+    console.log(TR);
+
     var canvas = document.getElementById("CursorLayer");
     var ctx = canvas.getContext("2d");
-
-    // Set the stroke color to a lighter grey
-    ctx.strokeStyle = "#999";
 
     // Draw the four lines
     ctx.setLineDash([5, 5]);
 
+    //Top left line
+    changeStrokeStyle(TL);
     ctx.beginPath();
     ctx.moveTo(line1.xBegin / 4, flipY(line1.yBegin / 4));
     ctx.lineTo(line1.xEnd / 4, flipY(line1.yEnd / 4));
@@ -398,6 +463,9 @@ function drawLines(line1, line2, line3, line4) {
     ctx.arc(line1.xEnd / 4, flipY(line1.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
 
+
+    //Top right line
+    changeStrokeStyle(TR);
     ctx.beginPath();
     ctx.moveTo(line2.xBegin / 4, flipY(line2.yBegin / 4));
     ctx.lineTo(line2.xEnd / 4, flipY(line2.yEnd / 4));
@@ -405,6 +473,9 @@ function drawLines(line1, line2, line3, line4) {
     ctx.beginPath();
     ctx.arc(line2.xEnd / 4, flipY(line2.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
+
+    // Set the stroke color to a lighter grey
+    ctx.strokeStyle = "#999";
 
     ctx.beginPath();
     ctx.moveTo(line3.xBegin / 4, flipY(line3.yBegin / 4));
@@ -664,6 +735,8 @@ var initialIndividual = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
+calculateTensions(centerX, centerY, initialIndividual);
+
 
 //Un-comment this code to use the simulated measurements
 
@@ -684,116 +757,15 @@ const centerY = initialHeight/2;
 
 var measurements = [
 
-{bl:1676.05,   br:2758.07,   tr:2389.19,   tl:963.48},
-{bl:1561.98,   br:2690.52,   tr:2426.01,   tl:1049.40},
-{bl:1453.72,   br:2626.89,   tr:2467.84,   tl:1142.86},
-{bl:1365.89,   br:2580.43,   tr:2505.58,   tl:1221.31},
-{bl:1281.56,   br:2537.20,   tr:2546.17,   tl:1302.92},
-{bl:1201.06,   br:2497.25,   tr:2590.01,   tl:1387.33},
-{bl:1123.24,   br:2462.01,   tr:2637.06,   tl:1473.32},
-{bl:1050.27,   br:2427.27,   tr:2687.40,   tl:1561.17},
-{bl:980.00,   br:2399.89,   tr:2740.13,   tl:1650.31},
-{bl:916.99,   br:2374.92,   tr:2795.52,   tl:1740.78},
-{bl:1750.23,   br:2628.96,   tr:2235.80,   tl:1085.98},
-{bl:1644.76,   br:2557.91,   tr:2274.67,   tl:1162.73},
-{bl:1539.83,   br:2490.60,   tr:2319.22,   tl:1248.09},
-{bl:1458.07,   br:2441.94,   tr:2359.45,   tl:1320.09},
-{bl:1379.25,   br:2395.85,   tr:2402.65,   tl:1396.16},
-{bl:1303.93,   br:2353.52,   tr:2449.15,   tl:1475.43},
-{bl:1233.70,   br:2314.78,   tr:2498.93,   tl:1556.38},
-{bl:1166.48,   br:2279.11,   tr:2551.78,   tl:1639.81},
-{bl:1105.22,   br:2248.83,   tr:2607.29,   tl:1724.84},
-{bl:1050.76,   br:2221.47,   tr:2665.61,   tl:1811.37},
-{bl:1840.00,   br:2503.69,   tr:2082.11,   tl:1217.38},
-{bl:1737.22,   br:2428.14,   tr:2124.47,   tl:1286.34},
-{bl:1638.07,   br:2357.55,   tr:2172.91,   tl:1363.98},
-{bl:1561.89,   br:2305.46,   tr:2215.05,   tl:1430.36},
-{bl:1488.95,   br:2255.89,   tr:2261.39,   tl:1500.93},
-{bl:1418.80,   br:2211.40,   tr:2310.68,   tl:1574.57},
-{bl:1352.67,   br:2172.23,   tr:2363.61,   tl:1650.89},
-{bl:1291.46,   br:2132.97,   tr:2419.30,   tl:1729.85},
-{bl:1234.94,   br:2100.78,   tr:2477.69,   tl:1810.49},
-{bl:1186.34,   br:2071.37,   tr:2538.79,   tl:1893.43},
-{bl:1933.09,   br:2379.15,   tr:1931.68,   tl:1354.86},
-{bl:1836.60,   br:2300.96,   tr:1976.14,   tl:1417.48},
-{bl:1742.53,   br:2225.87,   tr:2028.26,   tl:1487.82},
-{bl:1673.01,   br:2171.71,   tr:2073.26,   tl:1548.93},
-{bl:1604.84,   br:2114.75,   tr:2122.52,   tl:1614.82},
-{bl:1538.57,   br:2073.04,   tr:2175.37,   tl:1682.77},
-{bl:1479.80,   br:2027.56,   tr:2231.13,   tl:1754.76},
-{bl:1423.54,   br:1988.00,   tr:2289.96,   tl:1829.33},
-{bl:1370.98,   br:1952.47,   tr:2351.83,   tl:1905.95},
-{bl:1326.28,   br:1922.29,   tr:2416.13,   tl:1984.69},
-{bl:2036.56,   br:2260.30,   tr:1781.51,   tl:1497.02},
-{bl:1944.94,   br:2176.40,   tr:1830.52,   tl:1553.98},
-{bl:1857.01,   br:2097.46,   tr:1885.63,   tl:1618.56},
-{bl:1789.68,   br:2039.03,   tr:1934.56,   tl:1674.95},
-{bl:1725.68,   br:1983.46,   tr:1986.90,   tl:1735.23},
-{bl:1666.44,   br:1933.00,   tr:2043.36,   tl:1799.32},
-{bl:1610.20,   br:1886.32,   tr:2102.77,   tl:1866.55},
-{bl:1559.18,   br:1843.16,   tr:2165.22,   tl:1936.73},
-{bl:1511.91,   br:1805.39,   tr:2230.33,   tl:2009.16},
-{bl:1472.82,   br:1771.01,   tr:2298.24,   tl:2084.12},
-{bl:2148.04,   br:2146.05,   tr:1632.89,   tl:1642.42},
-{bl:2057.43,   br:2058.27,   tr:1686.26,   tl:1694.97},
-{bl:1977.24,   br:1973.76,   tr:1744.86,   tl:1754.25},
-{bl:1912.92,   br:1912.10,   tr:1797.81,   tl:1807.04},
-{bl:1854.61,   br:1853.73,   tr:1854.35,   tl:1863.54},
-{bl:1799.33,   br:1797.82,   tr:1914.30,   tl:1923.16},
-{bl:1746.24,   br:1747.94,   tr:1977.64,   tl:1986.33},
-{bl:1699.32,   br:1699.43,   tr:2043.72,   tl:2052.19},
-{bl:1656.62,   br:1658.61,   tr:2112.74,   tl:2120.85},
-{bl:1619.25,   br:1622.50,   tr:2184.08,   tl:2192.27},
-{bl:2263.34,   br:2038.28,   tr:1487.40,   tl:1790.26},
-{bl:2178.12,   br:1944.17,   tr:1544.95,   tl:1838.62},
-{bl:2098.63,   br:1858.57,   tr:1609.65,   tl:1894.08},
-{bl:2040.92,   br:1790.48,   tr:1665.99,   tl:1942.29},
-{bl:1985.12,   br:1727.32,   tr:1727.12,   tl:1994.98},
-{bl:1935.22,   br:1666.48,   tr:1791.55,   tl:2050.72},
-{bl:1886.49,   br:1610.83,   tr:1859.01,   tl:2110.15},
-{bl:1844.08,   br:1559.73,   tr:1929.47,   tl:2172.15},
-{bl:1806.01,   br:1512.90,   tr:2002.35,   tl:2237.37},
-{bl:1772.55,   br:1472.64,   tr:2077.18,   tl:2304.92},
-{bl:2382.40,   br:1937.54,   tr:1344.36,   tl:1939.98},
-{bl:2302.66,   br:1837.88,   tr:1408.29,   tl:1984.77},
-{bl:2226.42,   br:1744.33,   tr:1479.11,   tl:2035.31},
-{bl:2172.14,   br:1672.22,   tr:1539.98,   tl:2081.44},
-{bl:2119.97,   br:1603.77,   tr:1606.35,   tl:2129.99},
-{bl:2072.27,   br:1539.27,   tr:1674.85,   tl:2182.81},
-{bl:2027.83,   br:1478.58,   tr:1747.17,   tl:2238.34},
-{bl:1989.27,   br:1423.98,   tr:1821.84,   tl:2297.20},
-{bl:1953.22,   br:1372.86,   tr:1898.55,   tl:2358.76},
-{bl:1922.77,   br:1328.56,   tr:1977.68,   tl:2422.78},
-{bl:2505.79,   br:1841.51,   tr:1207.99,   tl:2091.19},
-{bl:2429.20,   br:1739.30,   tr:1275.52,   tl:2132.81},
-{bl:2359.42,   br:1639.91,   tr:1354.33,   tl:2180.11},
-{bl:2308.19,   br:1564.04,   tr:1421.03,   tl:2222.83},
-{bl:2258.42,   br:1489.72,   tr:1492.32,   tl:2268.84},
-{bl:2214.17,   br:1419.80,   tr:1566.40,   tl:2318.16},
-{bl:2173.96,   br:1354.46,   tr:1643.26,   tl:2370.43},
-{bl:2136.59,   br:1293.11,   tr:1722.09,   tl:2426.04},
-{bl:2102.99,   br:1237.07,   tr:1803.29,   tl:2484.46},
-{bl:2072.67,   br:1189.23,   tr:1886.32,   tl:2545.60},
-{bl:2632.37,   br:1756.76,   tr:1075.64,   tl:2243.40},
-{bl:2560.10,   br:1649.03,   tr:1151.67,   tl:2282.61},
-{bl:2494.34,   br:1543.26,   tr:1237.78,   tl:2326.89},
-{bl:2442.54,   br:1462.99,   tr:1310.99,   tl:2366.71},
-{bl:2398.05,   br:1383.06,   tr:1387.66,   tl:2409.88},
-{bl:2356.36,   br:1307.35,   tr:1467.02,   tl:2456.37},
-{bl:2318.34,   br:1236.08,   tr:1548.32,   tl:2506.11},
-{bl:2282.28,   br:1170.05,   tr:1632.34,   tl:2558.37},
-{bl:2250.78,   br:1107.19,   tr:1717.74,   tl:2614.12},
-{bl:2223.60,   br:1052.21,   tr:1804.79,   tl:2671.74},
-{bl:2761.07,   br:1679.79,   tr:952.30,   tl:2397.33},
-{bl:2692.37,   br:1568.52,   tr:1037.32,   tl:2433.37},
-{bl:2631.51,   br:1458.59,   tr:1131.56,   tl:2475.21},
-{bl:2581.74,   br:1370.64,   tr:1212.33,   tl:2512.59},
-{bl:2540.65,   br:1287.07,   tr:1293.82,   tl:2553.14},
-{bl:2499.76,   br:1205.12,   tr:1378.97,   tl:2597.48},
-{bl:2463.52,   br:1126.28,   tr:1465.91,   tl:2644.35},
-{bl:2430.86,   br:1052.91,   tr:1553.65,   tl:2694.31},
-{bl:2401.31,   br:984.67,   tr:1643.39,   tl:2746.77},
-{bl:2376.66,   br:922.23,   tr:1733.76,   tl:2801.97},
+{bl:1681.62,   br:2932.75,   tr:2648.93,   tl:1198.52},
+{bl:1378.70,   br:2758.13,   tr:2785.88,   tl:1473.73},
+{bl:1131.37,   br:2637.00,   tr:2967.56,   tl:1793.43},
+{bl:2227.41,   br:2256.28,   tr:1894.46,   tl:1903.04},
+{bl:2020.18,   br:2040.67,   tr:2077.02,   tl:2085.26},
+{bl:1862.34,   br:1866.22,   tr:2314.90,   tl:2322.43},
+{bl:2913.09,   br:1732.72,   tr:1192.42,   tl:2659.92},
+{bl:2750.53,   br:1426.15,   tr:1465.21,   tl:2792.83},
+{bl:2632.56,   br:1164.90,   tr:1786.40,   tl:2974.06}
 
 ];
 measurements = scaleMeasurements(measurements, 0.9945);
