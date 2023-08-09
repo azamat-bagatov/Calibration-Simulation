@@ -29,7 +29,7 @@ const initialWidth = 3048 + 12;
 const initialHeight = 2200 - 14;
 
 
-//These are the true corners of the machine that we want to solve for
+//These are the true corners of the machine that we want to solve for (only used for simulated measurments)
 const trueTLX = -0.6948090610228441;
 const trueTLY = 2131.275233532367;
 const trueTRX = 3034.4072793128926;
@@ -605,8 +605,8 @@ function scaleMeasurements(measurements, scale) {
 
 function scaleMeasurementsBasedOnTension(measurements, guess) {
 
-    const maxScale = 0.9945;
-    const minScale = 0.9945;
+    const maxScale = 0.995;
+    const minScale = 0.994;
     const maxTension = 60;
     const minTension = 20;
 
@@ -631,7 +631,7 @@ function scaleMeasurementsBasedOnTension(measurements, guess) {
 }
 
 
-function findMaxFitness(initialIndividual, measurements) {
+function findMaxFitness(initialGuess, measurements) {
     var maxFitness = -1;
     var newFitness = 0;
     var stagnantCounter = 0;
@@ -643,8 +643,8 @@ function findMaxFitness(initialIndividual, measurements) {
         //Run 1,000 steps
         for (let i = 0; i < 100; i++) {
             clearCanvas();
-            initialIndividual = computeLinesFitness(measurements, initialIndividual);
-            maxFitnessThisRun = Math.max(1 / initialIndividual.fitness, maxFitnessThisRun);
+            initialGuess = computeLinesFitness(measurements, initialGuess);
+            maxFitnessThisRun = Math.max(1 / initialGuess.fitness, maxFitnessThisRun);
         }
 
         newFitness = maxFitnessThisRun;
@@ -664,7 +664,7 @@ function findMaxFitness(initialIndividual, measurements) {
     console.log("Maxfitness: " + maxFitness);
     console.log("NewFitness: " + newFitness);
 
-    return initialIndividual;
+    return initialGuess;
 }
 
 
@@ -689,8 +689,8 @@ function clearCanvas() {
 const computeButton = document.getElementById('compute-button');
 computeButton.addEventListener('click', () => {
     clearCanvas();
-    initialIndividual = computeLinesFitness(measurements, initialIndividual);
-    printResults(initialIndividual);
+    initialGuess = computeLinesFitness(measurements, initialGuess);
+    printResults(initialGuess);
 });
 
 
@@ -699,27 +699,27 @@ const compute1kButton = document.getElementById('compute-1k-button');
 compute1kButton.addEventListener('click', () => {
     for(let i = 0; i < 1000; i++){
         clearCanvas();
-        initialIndividual = computeLinesFitness(measurements, initialIndividual);
-        console.log("Fitness: " + 1/initialIndividual.fitness);
+        initialGuess = computeLinesFitness(measurements, initialGuess);
+        console.log("Fitness: " + 1/initialGuess.fitness);
     }
-    printResults(initialIndividual);
+    printResults(initialGuess);
 });
 
 const compute10kButton = document.getElementById('compute-10k-button');
 compute10kButton.addEventListener('click', () => {
     for(let i = 0; i < 10000; i++){
         clearCanvas();
-        initialIndividual = computeLinesFitness(measurements, initialIndividual);
-        console.log("Fitness: " + 1/initialIndividual.fitness);
+        initialGuess = computeLinesFitness(measurements, initialGuess);
+        console.log("Fitness: " + 1/initialGuess.fitness);
     }
-    printResults(initialIndividual);
+    printResults(initialGuess);
 });
 
 
 const computeEndButton = document.getElementById('compute-end-button');
 computeEndButton.addEventListener('click', () => {
 
-    var result = findMaxFitness(initialIndividual, measurements);
+    var result = findMaxFitness(initialGuess, measurements);
 
     printResults(result);
 });
@@ -737,7 +737,7 @@ computeEndButton.addEventListener('click', () => {
 //using a genetic algorithm
 
 //Establish initial guesses for the corners
-var initialIndividual = {
+var initialGuess = {
     tl: {x: 0, y: initialHeight},
     tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
@@ -750,7 +750,7 @@ var initialIndividual = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-calculateTensions(centerX, centerY, initialIndividual);
+calculateTensions(centerX, centerY, initialGuess);
 
 
 //Un-comment this code to use the simulated measurements
@@ -889,7 +889,7 @@ var measurements = [
 measurements = scaleMeasurements(measurements, 0.9945);
 measurements = projectMeasurements(measurements);
 
-computeLinesFitness(measurements, initialIndividual);
+computeLinesFitness(measurements, initialGuess);
 
 
 
