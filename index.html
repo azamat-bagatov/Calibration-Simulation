@@ -379,9 +379,12 @@ function calculateTensions(x, y, guess) {
     let Xbr = guess.br.x;
     let Ybr = guess.br.y;
 
+    let BL = 140; //say tension in bottom belts is ~14kg
+    let BR = 140; 
+
     let mass = 5.0;
     const G_CONSTANT = 9.80665;
-    let alpha = 0.26;
+    let alpha = 0.262;
     let TL, TR;
   
     let A, C, sinD, cosD, sinE, cosE;
@@ -396,20 +399,20 @@ function calculateTensions(x, y, guess) {
     sinE = Math.abs(Xbr - x) / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
     cosE = y / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
 
-    Fx = Ybr * sinE - Ybl * sinD;
-    Fy = Ybr * cosE + Ybl * cosD + mass * G_CONSTANT * Math.cos(alpha);
-    // console.log(`Fx = ${Fx.toFixed(1)}, Fy = ${Fy.toFixed(1)}`);
+    Fx = BR * sinE - BL * sinD;
+    Fy = BR * cosE + BL * cosD + mass * G_CONSTANT * Math.cos(alpha);
+     //console.log(`Fx = ${Fx.toFixed(1)}, Fy = ${Fy.toFixed(1)}`);
 
     let TLy = (Fx + C * Fy) / (A + C);
     let TRy = Fy - TLy;
     let TRx = C * (Fy - TLy);
     let TLx = A * TLy;
 
-    // console.log(`TLy = ${TLy.toFixed(1)}, TRy = ${TRy.toFixed(1)}, TRx = ${TRx.toFixed(1)}, TLx = ${TLx.toFixed(1)}`);
+     //console.log(`TLy = ${TLy.toFixed(1)}, TRy = ${TRy.toFixed(1)}, TRx = ${TRx.toFixed(1)}, TLx = ${TLx.toFixed(1)}`);
 
     TL = Math.sqrt(Math.pow(TLx, 2) + Math.pow(TLy, 2));
     TR = Math.sqrt(Math.pow(TRx, 2) + Math.pow(TRy, 2));
-
+    //console.log(`TL = ${TL.toFixed(1)}, TR = ${TR.toFixed(1)}`);
     return { TL, TR };
 }
 
@@ -541,11 +544,12 @@ function projectMeasurement(measurement){
     const trZ = 69;
     const blZ = 47;
     const brZ = 89;
-
-    const tl = Math.sqrt(Math.pow(measurement.tl,2) - Math.pow(tlZ,2));
-    const tr = Math.sqrt(Math.pow(measurement.tr,2) - Math.pow(trZ,2));
-    const bl = Math.sqrt(Math.pow(measurement.bl,2) - Math.pow(blZ,2));
-    const br = Math.sqrt(Math.pow(measurement.br,2) - Math.pow(brZ,2));
+    //back correction for arms lengts 
+    const armLength = 123.4;
+    const tl = Math.sqrt(Math.pow(measurement.tl - armLength, 2) - Math.pow(tlZ,2)) + armLength;
+    const tr = Math.sqrt(Math.pow(measurement.tr - armLength, 2) - Math.pow(trZ,2)) + armLength;
+    const bl = Math.sqrt(Math.pow(measurement.bl - armLength, 2) - Math.pow(blZ,2)) + armLength;
+    const br = Math.sqrt(Math.pow(measurement.br - armLength, 2) - Math.pow(brZ,2)) + armLength;
 
     return {tl: tl, tr: tr, bl: bl, br: br};
 }
@@ -605,25 +609,33 @@ function scaleMeasurements(measurements, scale) {
 
 function scaleMeasurementsBasedOnTension(measurements, guess) {
 
-    const maxScale = 0.995;
-    const minScale = 0.994;
-    const maxTension = 60;
-    const minTension = 20;
 
-    const scaleRange = maxScale - minScale;
-    const tensionRange = maxTension - minTension;
+
+    const bottomTension = 140; 
+    const spring = guess; //0.01; // mm/N
+
+    //const scaleRange = maxScale - minScale;
+    //const tensionRange = maxTension - minTension;
     
 
     const newMeasurements = measurements.map(measurement => {
 
-        const tensionAdjustedTLScale = (1 - ((measurement.TLtension - minTension) / tensionRange)) * scaleRange + minScale;
-        const tensionAdjustedTRScale = (1 - ((measurement.TRtension - minTension) / tensionRange)) * scaleRange + minScale;
+        const stretchTL = measurement.TLtension*spring;
+        const stretchTR = measurement.TRtension*spring;
+        const stretchBL = bottomTension*spring;
+        const stretchBR = bottomTension*spring;
         
+        
+        //const tensionAdjustedTLScale = (1 - ((measurement.TLtension - minTension) / tensionRange)) * scaleRange + minScale;
+        //const tensionAdjustedTRScale = (1 - ((measurement.TRtension - minTension) / tensionRange)) * scaleRange + minScale;
+
+        console.log( "stretchTL = " + stretchTL + "  stretchTR = " + stretchTR);
+
         return {
-            tl: measurement.tl * tensionAdjustedTLScale,
-            tr: measurement.tr * tensionAdjustedTRScale,
-            bl: measurement.bl,  // * scale,
-            br: measurement.br,  // * scale
+            tl: measurement.tl  + stretchTL,
+            tr: measurement.tr  + stretchTR,
+            bl: measurement.bl  + stretchBL,  // * scale,
+            br: measurement.br  + stretchBR,  // * scale
         };
     });
 
@@ -722,6 +734,7 @@ computeEndButton.addEventListener('click', () => {
     var result = findMaxFitness(initialGuess, measurements);
 
     printResults(result);
+    console.log("strertch guess = " + stretch_guess);
 });
 
 
@@ -738,6 +751,10 @@ computeEndButton.addEventListener('click', () => {
 
 //Establish initial guesses for the corners
 var initialGuess = {
+    // tl: {x: 0, y: initialHeight},
+    // tr: {x: initialWidth, y: initialHeight},
+    // bl: {x: 0, y: 0},
+    // br: {x: initialWidth, y: 0},
     tl: {x: 0, y: initialHeight},
     tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
@@ -750,7 +767,7 @@ var initialGuess = {
 const centerX = initialWidth/2;
 const centerY = initialHeight/2;
 
-calculateTensions(centerX, centerY, initialGuess);
+//calculateTensions(centerX, centerY, initialGuess);
 
 
 //Un-comment this code to use the simulated measurements
@@ -886,10 +903,18 @@ var measurements = [
 ];
 
 //Do projection and scaling
-measurements = scaleMeasurements(measurements, 0.9945);
-measurements = projectMeasurements(measurements);
+//measurements = scaleMeasurements(measurements, 0.9945);
 
+//measurements = projectMeasurements(measurements);
+
+
+//const stretch_guess = 0.01;
+//const stretch_guess = 0.001;
+const stretch_guess = 0.0001;
 computeLinesFitness(measurements, initialGuess);
+
+measurements = scaleMeasurementsBasedOnTension(measurements,stretch_guess);
+measurements = projectMeasurements(measurements);
 
 
 
