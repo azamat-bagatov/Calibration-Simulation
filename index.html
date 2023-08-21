@@ -216,10 +216,10 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .01);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
-    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
-    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
-    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0000001);
-    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00000001);
+    //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
+    //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
+    //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0000001);
+    //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00000001);
 
     measurement.tlTheta = tlLine.theta;
     measurement.trTheta = trLine.theta;
@@ -234,7 +234,6 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     measurement.TLtension = TL;
     measurement.TRtension = TR;
 
-    drawLines(tlLine, trLine, blLine, brLine, individual);
 
     return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}};
 }
@@ -353,8 +352,17 @@ function computeLinesFitness(measurements, lastGuess){
         const {fitness, lines} = magneticallyAttractedLinesFitness(measurement, lastGuess);
         fitnesses.push(fitness);
         allLines.push(lines);
+        
     });
+    //print all of the fitnesses next to each measurement in red color and update canvas in real time
+    printFitnesses(measurements, lastGuess);
+
+
     
+    //draw all the lines:
+    for (var i = 0; i < allLines.length; i++) {
+        //drawLines(allLines[i].tlLine, allLines[i].trLine, allLines[i].blLine, allLines[i].brLine, lastGuess);
+    }
     //Computes the average fitness of all of the measurements
     const fitness = calculateAverage(fitnesses);
 
@@ -366,7 +374,6 @@ function computeLinesFitness(measurements, lastGuess){
 
     return lastGuess;
 }
-
 
 
 function calculateTensions(x, y, guess) {
@@ -495,8 +502,28 @@ function drawLines(line1, line2, line3, line4, guess) {
     ctx.beginPath();
     ctx.arc(line4.xEnd / 4, flipY(line4.yEnd / 4), 2, 0, 2 * Math.PI);
     ctx.fill();
-}
 
+    
+  
+    // ctx.fillText("TL: " + TL.toFixed(2), line1.xEnd / 4, flipY(line1.yEnd / 4) + 10);
+    // ctx.fillText("TR: " + TR.toFixed(2), line1.xEnd / 4, flipY(line1.yEnd / 4) + 20);
+    
+}
+//print all of the fitnesses next to each measurement in red color
+
+function printFitnesses(measurements, guess){
+    var canvas = document.getElementById("CursorLayer");
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#FF0000";
+    ctx.font = "14px Arial";
+    var i = 0;
+    measurements.forEach(measurement => {
+        const {fitness, lines} = magneticallyAttractedLinesFitness(measurement, guess);
+        i++;
+        ctx.fillText(fitness.toFixed(4), (i/10)*70,(i%10)*30);
+    });
+
+}
 
 
 /**
@@ -545,7 +572,7 @@ function projectMeasurement(measurement){
     const blZ = 47;
     const brZ = 89;
     //back correction for arms lengts 
-    const armLength = 123.4;
+    const armLength = 0;// 123.4;
     const tl = Math.sqrt(Math.pow(measurement.tl - armLength, 2) - Math.pow(tlZ,2)) + armLength;
     const tr = Math.sqrt(Math.pow(measurement.tr - armLength, 2) - Math.pow(trZ,2)) + armLength;
     const bl = Math.sqrt(Math.pow(measurement.bl - armLength, 2) - Math.pow(blZ,2)) + armLength;
@@ -648,7 +675,7 @@ function findMaxFitness(initialGuess, measurements) {
     var newFitness = 0;
     var stagnantCounter = 0;
 
-    while (stagnantCounter < 14) {
+    while (stagnantCounter < 30) {
         maxFitness = newFitness;
 
         var maxFitnessThisRun = 0;
@@ -730,11 +757,31 @@ compute10kButton.addEventListener('click', () => {
 
 const computeEndButton = document.getElementById('compute-end-button');
 computeEndButton.addEventListener('click', () => {
-
+    //measure time to compute
+    var t0 = performance.now();
     var result = findMaxFitness(initialGuess, measurements);
-
+    var t1 = performance.now();
+    console.log("Call to findMaxFitness took " + (t1 - t0)/1000 + " seconds.");
     printResults(result);
-    console.log("strertch guess = " + stretch_guess);
+    treshold = 1.0
+    //then we leave all the measurements with fitness less than treshold and run findMaxFitness again
+    var newMeasurements = [];
+    measurements.forEach(measurement => {
+        const {fitness, lines} = magneticallyAttractedLinesFitness(measurement, result);
+        if (fitness < treshold) {
+            newMeasurements.push(measurement);
+        }
+    });
+    measurements = newMeasurements;
+    initialGuess = result;
+    console.log("New measurements: " + measurements.length);
+    console.log("New initial guess: " + initialGuess.fitness);
+    t0 = performance.now();
+    result = findMaxFitness(result, newMeasurements);
+    t1 = performance.now();
+    printResults(result);
+    console.log("Call to findMaxFitness took " + (t1 - t0)/1000 + " seconds.");
+   
 });
 
 
@@ -910,7 +957,7 @@ var measurements = [
 
 //const stretch_guess = 0.01;
 //const stretch_guess = 0.001;
-const stretch_guess = 0.0001;
+const stretch_guess = 0.03;
 computeLinesFitness(measurements, initialGuess);
 
 measurements = scaleMeasurementsBasedOnTension(measurements,stretch_guess);
