@@ -816,7 +816,8 @@ function drawLineEnds( measurementID){
     var trLine = computeLineEndPoint({xBegin:result_global.tr.x, yBegin:result_global.tr.y, theta: measurements[measurementID].trTheta,length: measurements[measurementID].tr});
     var blLine = computeLineEndPoint({xBegin:result_global.bl.x, yBegin:result_global.bl.y, theta: measurements[measurementID].blTheta,length: measurements[measurementID].bl});
     var brLine = computeLineEndPoint({xBegin:result_global.br.x, yBegin:result_global.br.y, theta: measurements[measurementID].brTheta,length: measurements[measurementID].br});
-    var size = computeEndpointFitness(tlLine, trLine, blLine, brLine);
+    var size = 1/result_global.fitness;
+    // computeEndpointFitness(tlLine, trLine, blLine, brLine);
     var lines = [tlLine, trLine, blLine, brLine];
     var x0 = blLine.xEnd - size*2;
     var y0 = blLine.yEnd - size*2;
