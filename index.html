@@ -557,6 +557,7 @@ function printResults(guess){
     // console.log("brX error: " + (guess.br.x - trueBRX) + "mm at: " + guess.br.x);
 
     console.log("(" + guess.tl.x + ", " + guess.tl.y + "), (" + guess.tr.x + ", " + guess.tr.y + ")\n (" + guess.bl.x + ", " + guess.bl.y + "), (" + guess.br.x + ", " + guess.br.y + ")"); 
+    console.log("Fitness: " + 1/guess.fitness);
 
 }
 
@@ -700,8 +701,8 @@ function findMaxFitness(initialGuess, measurements) {
         }
     }
 
-    console.log("Maxfitness: " + maxFitness);
-    console.log("NewFitness: " + newFitness);
+    //console.log("Maxfitness: " + maxFitness);
+    //console.log("NewFitness: " + newFitness);
 
     return initialGuess;
 }
@@ -758,12 +759,38 @@ compute10kButton.addEventListener('click', () => {
 const computeEndButton = document.getElementById('compute-end-button');
 computeEndButton.addEventListener('click', () => {
     //measure time to compute
+    subset1 = measurements.slice(0, 50);
+    subset2 = measurements.slice(50, 100);
+    console.log("Initial guess: " + initialGuess.fitness);
+    var _result = findMaxFitness(initialGuess, measurements);
+    printResults(_result);
+    /*
+    var guess = {
+        tl: {x: 0, y: initialHeight},
+        tr: {x: initialWidth, y: initialHeight},
+        bl: {x: 0, y: 0},
+        br: {x: initialWidth, y: 0},
+        fitness: 0
+    }
+
+    console.log("guess: " + guess.fitness);
+    var result = findMaxFitnessWithTreshold(guess, subset2, 0.4);
+
+    console.log("First 50 points: ");
+    printResults(_result);
+    console.log("Second 50 points: ");
+    printResults(result);
+    */
+
+});
+
+function findMaxFitnessWithTreshold(initialGuess, measurements, treshold) {
     var t0 = performance.now();
     var result = findMaxFitness(initialGuess, measurements);
     var t1 = performance.now();
-    console.log("Call to findMaxFitness took " + (t1 - t0)/1000 + " seconds.");
-    printResults(result);
-    treshold = 1.0
+    //console.log("Call to findMaxFitness took " + (t1 - t0)/1000 + " seconds.");
+    //printResults(result);
+    treshold = 0.5
     //then we leave all the measurements with fitness less than treshold and run findMaxFitness again
     var newMeasurements = [];
     measurements.forEach(measurement => {
@@ -774,17 +801,15 @@ computeEndButton.addEventListener('click', () => {
     });
     measurements = newMeasurements;
     initialGuess = result;
-    console.log("New measurements: " + measurements.length);
-    console.log("New initial guess: " + initialGuess.fitness);
+    //console.log("New measurements: " + measurements.length);
+    //console.log("New initial guess: " + initialGuess.fitness);
     t0 = performance.now();
     result = findMaxFitness(result, newMeasurements);
     t1 = performance.now();
-    printResults(result);
-    console.log("Call to findMaxFitness took " + (t1 - t0)/1000 + " seconds.");
-   
-});
-
-
+    //printResults(result);
+    //console.log("Call to findMaxFitness took " + (t1 - t0)/1000 + " seconds.");
+    return result;
+}
 
 
 //This is where the program really begins. The above is all function definitions
@@ -960,7 +985,7 @@ var measurements = [
 const stretch_guess = 0.03;
 computeLinesFitness(measurements, initialGuess);
 
-measurements = scaleMeasurementsBasedOnTension(measurements,stretch_guess);
+//measurements = scaleMeasurementsBasedOnTension(measurements,stretch_guess);
 measurements = projectMeasurements(measurements);
 
 
