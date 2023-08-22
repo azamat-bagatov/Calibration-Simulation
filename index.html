@@ -7,6 +7,9 @@
     <button id="compute-1k-button">1,000x</button>
     <button id="compute-10k-button">10,000x</button>
     <button id="compute-end-button">End</button>
+    <button id="scroll-up-button">Up</button>
+    <button id="scroll-down-button">Down</button>
+    <input type="text" id="partameterField" placeholder="--" value="140" style="width: 50px; height: 20px; font-size: 12px; text-align: center;"/>
     <style>
         body {
             margin: 0;
@@ -23,6 +26,8 @@
 </div>
 
 <script>
+//get bottomTension from input field
+var bottomTension = document.getElementById("partameterField").value;
 
 //This is the inital guess for how big the machine is. These numbers are wrong intensionally
 const initialWidth = 3048 + 12;
@@ -238,6 +243,7 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     return {fitness: finalFitness, lines: {tlLine: tlLine, trLine: trLine, blLine: blLine, brLine: brLine}};
 }
 
+
 /**
  * Computes the distance of one line's end point from the center of mass of the other three lines.
  * @param {Object} lineToCompare - The line to compute the distance for.
@@ -356,8 +362,6 @@ function computeLinesFitness(measurements, lastGuess){
     });
     //print all of the fitnesses next to each measurement in red color and update canvas in real time
     printFitnesses(measurements, lastGuess);
-
-
     
     //draw all the lines:
     for (var i = 0; i < allLines.length; i++) {
@@ -376,52 +380,7 @@ function computeLinesFitness(measurements, lastGuess){
 }
 
 
-function calculateTensions(x, y, guess) {
-    let Xtl = guess.tl.x;
-    let Ytl = guess.tl.y;
-    let Xtr = guess.tr.x;
-    let Ytr = guess.tr.y;
-    let Xbl = guess.bl.x;
-    let Ybl = guess.bl.y;
-    let Xbr = guess.br.x;
-    let Ybr = guess.br.y;
 
-    let BL = 140; //say tension in bottom belts is ~14kg
-    let BR = 140; 
-
-    let mass = 5.0;
-    const G_CONSTANT = 9.80665;
-    let alpha = 0.262;
-    let TL, TR;
-  
-    let A, C, sinD, cosD, sinE, cosE;
-    let Fx, Fy;
-
-    A = (Xtl - x) / (Ytl - y);
-    C = (Xtr - x) / (Ytr - y);
-    A = Math.abs(A);
-    C = Math.abs(C);
-    sinD = x / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-    cosD = y / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-    sinE = Math.abs(Xbr - x) / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
-    cosE = y / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
-
-    Fx = BR * sinE - BL * sinD;
-    Fy = BR * cosE + BL * cosD + mass * G_CONSTANT * Math.cos(alpha);
-     //console.log(`Fx = ${Fx.toFixed(1)}, Fy = ${Fy.toFixed(1)}`);
-
-    let TLy = (Fx + C * Fy) / (A + C);
-    let TRy = Fy - TLy;
-    let TRx = C * (Fy - TLy);
-    let TLx = A * TLy;
-
-     //console.log(`TLy = ${TLy.toFixed(1)}, TRy = ${TRy.toFixed(1)}, TRx = ${TRx.toFixed(1)}, TLx = ${TLx.toFixed(1)}`);
-
-    TL = Math.sqrt(Math.pow(TLx, 2) + Math.pow(TLy, 2));
-    TR = Math.sqrt(Math.pow(TRx, 2) + Math.pow(TRy, 2));
-    //console.log(`TL = ${TL.toFixed(1)}, TR = ${TR.toFixed(1)}`);
-    return { TL, TR };
-}
 
 /**
  * Flips the y-coordinate of a point to account for the canvas having y at the top.
@@ -456,10 +415,7 @@ function changeStrokeStyle(inputValue) {
  * @returns {void}
  */
 function drawLines(line1, line2, line3, line4, guess) {
-
-    //Compute the tensions in the upper two belts
-    //const { TL, TR } = calculateTensions(line1.xEnd, line1.yEnd, guess); //This assumes the ends are in the same place which they aren't at first
-
+    
     var canvas = document.getElementById("CursorLayer");
     var ctx = canvas.getContext("2d");
 
@@ -511,19 +467,7 @@ function drawLines(line1, line2, line3, line4, guess) {
 }
 //print all of the fitnesses next to each measurement in red color
 
-function printFitnesses(measurements, guess){
-    var canvas = document.getElementById("CursorLayer");
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#FF0000";
-    ctx.font = "14px Arial";
-    var i = 0;
-    measurements.forEach(measurement => {
-        const {fitness, lines} = magneticallyAttractedLinesFitness(measurement, guess);
-        i++;
-        ctx.fillText(fitness.toFixed(4), (i/10)*70,(i%10)*30);
-    });
 
-}
 
 
 /**
@@ -635,11 +579,57 @@ function scaleMeasurements(measurements, scale) {
     return newMeasurements;
 }
 
+function calculateTensions(x, y, guess) {
+    let Xtl = guess.tl.x;
+    let Ytl = guess.tl.y;
+    let Xtr = guess.tr.x;
+    let Ytr = guess.tr.y;
+    let Xbl = guess.bl.x;
+    let Ybl = guess.bl.y;
+    let Xbr = guess.br.x;
+    let Ybr = guess.br.y;
+
+    let BL = bottomTension; //say tension in bottom belts is ~14kg
+    let BR = bottomTension; 
+
+    let mass = 5.0;
+    const G_CONSTANT = 9.80665;
+    let alpha = 0.262;
+    let TL, TR;
+  
+    let A, C, sinD, cosD, sinE, cosE;
+    let Fx, Fy;
+
+    A = (Xtl - x) / (Ytl - y);
+    C = (Xtr - x) / (Ytr - y);
+    A = Math.abs(A);
+    C = Math.abs(C);
+    sinD = x / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    cosD = y / Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    sinE = Math.abs(Xbr - x) / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
+    cosE = y / Math.sqrt(Math.pow(Xbr - x, 2) + Math.pow(y, 2));
+
+    Fx = BR * sinE - BL * sinD;
+    Fy = BR * cosE + BL * cosD + mass * G_CONSTANT * Math.cos(alpha);
+     //console.log(`Fx = ${Fx.toFixed(1)}, Fy = ${Fy.toFixed(1)}`);
+
+    let TLy = (Fx + C * Fy) / (A + C);
+    let TRy = Fy - TLy;
+    let TRx = C * (Fy - TLy);
+    let TLx = A * TLy;
+
+     //console.log(`TLy = ${TLy.toFixed(1)}, TRy = ${TRy.toFixed(1)}, TRx = ${TRx.toFixed(1)}, TLx = ${TLx.toFixed(1)}`);
+
+    TL = Math.sqrt(Math.pow(TLx, 2) + Math.pow(TLy, 2));
+    TR = Math.sqrt(Math.pow(TRx, 2) + Math.pow(TRy, 2));
+    //console.log(`TL = ${TL.toFixed(1)}, TR = ${TR.toFixed(1)}`);
+    return { TL, TR };
+}
 function scaleMeasurementsBasedOnTension(measurements, guess) {
 
 
 
-    const bottomTension = 140; 
+    //const bottomTension = 140; 
     const spring = guess; //0.01; // mm/N
 
     //const scaleRange = maxScale - minScale;
@@ -708,8 +698,6 @@ function findMaxFitness(initialGuess, measurements) {
 }
 
 
-
-
 //Creates the canvas on which the pattern will be drawn
 var canvas = document.createElement('canvas');
 canvas.id     = "CursorLayer";
@@ -725,6 +713,19 @@ function clearCanvas() {
     context.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+function printFitnesses(measurements, guess){
+    var canvas = document.getElementById("CursorLayer");
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#FF0000";
+    ctx.font = "14px Arial";
+    var i = 0;
+    measurements.forEach(measurement => {
+        const {fitness, lines} = magneticallyAttractedLinesFitness(measurement, guess);
+        i++;
+        ctx.fillText(fitness.toFixed(4), (i/10)*70,(i%10)*30);
+    });
+
+}
 // Attach an event listener to the button
 const computeButton = document.getElementById('compute-button');
 computeButton.addEventListener('click', () => {
@@ -732,7 +733,6 @@ computeButton.addEventListener('click', () => {
     initialGuess = computeLinesFitness(measurements, initialGuess);
     printResults(initialGuess);
 });
-
 
 //Create the buttons that the user can click
 const compute1kButton = document.getElementById('compute-1k-button');
@@ -755,34 +755,130 @@ compute10kButton.addEventListener('click', () => {
     printResults(initialGuess);
 });
 
+var result_global;
 
 const computeEndButton = document.getElementById('compute-end-button');
 computeEndButton.addEventListener('click', () => {
     //measure time to compute
-    subset1 = measurements.slice(0, 50);
-    subset2 = measurements.slice(50, 100);
+    //subset1 = measurements.slice(0, 50);
+    //subset2 = measurements.slice(50, 100);
     console.log("Initial guess: " + initialGuess.fitness);
-    var _result = findMaxFitness(initialGuess, measurements);
-    printResults(_result);
-    /*
-    var guess = {
-        tl: {x: 0, y: initialHeight},
-        tr: {x: initialWidth, y: initialHeight},
-        bl: {x: 0, y: 0},
-        br: {x: initialWidth, y: 0},
-        fitness: 0
-    }
 
-    console.log("guess: " + guess.fitness);
-    var result = findMaxFitnessWithTreshold(guess, subset2, 0.4);
+    bottomTension = 140;
+    const stretch_guess = 0.03;
+    computeLinesFitness(measurements, initialGuess);
+    measurements = scaleMeasurementsBasedOnTension(measurements,stretch_guess);
+    measurements = projectMeasurements(measurements);
 
-    console.log("First 50 points: ");
-    printResults(_result);
-    console.log("Second 50 points: ");
+    result = findMaxFitness(initialGuess, measurements);
     printResults(result);
-    */
+    result_global = result;
+    console.log("bottomTension: " + bottomTension);
+    drawLineEnds(0);
 
 });
+var cursor  = 0;
+//two buttons for scrolling theought the measurements labeled with up and down arrows
+const scrollUpButton = document.getElementById('scroll-up-button');
+scrollUpButton.textContent = "⬆";
+scrollUpButton.addEventListener('click', () => {
+    cursor--;
+    if(cursor < 0){
+        cursor = measurements.length - 1;
+    }
+    drawLineEnds(cursor);
+});
+
+const scrollDownButton = document.getElementById('scroll-down-button');
+scrollDownButton.textContent = "⬇";
+scrollDownButton.addEventListener('click', () => {  
+    cursor++;
+    if(cursor > measurements.length - 1){
+        cursor = 0;
+    }
+    drawLineEnds(cursor);
+});
+
+// on value change in parameter field, redraw current line ends
+const parameterField = document.getElementById('partameterField');
+parameterField.addEventListener('change', () => {
+    drawLineEnds(cursor);
+});
+
+//func to draw on canvas the ends of the lines scaled to their fitness 
+function drawLineEnds( measurementID){
+    clearCanvas();
+    var canvas = document.getElementById("CursorLayer");
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#FF0000";
+    ctx.font = "14px Arial";
+    var tlLine = computeLineEndPoint({xBegin:result_global.tl.x, yBegin:result_global.tl.y, theta: measurements[measurementID].tlTheta,length: measurements[measurementID].tl});
+    var trLine = computeLineEndPoint({xBegin:result_global.tr.x, yBegin:result_global.tr.y, theta: measurements[measurementID].trTheta,length: measurements[measurementID].tr});
+    var blLine = computeLineEndPoint({xBegin:result_global.bl.x, yBegin:result_global.bl.y, theta: measurements[measurementID].blTheta,length: measurements[measurementID].bl});
+    var brLine = computeLineEndPoint({xBegin:result_global.br.x, yBegin:result_global.br.y, theta: measurements[measurementID].brTheta,length: measurements[measurementID].br});
+    var size = computeEndpointFitness(tlLine, trLine, blLine, brLine);
+    var lines = [tlLine, trLine, blLine, brLine];
+    var x0 = blLine.xEnd - size*2;
+    var y0 = blLine.yEnd - size*2;
+    let scale = document.getElementById("partameterField").value;
+
+    //show real scale ruler at the bottom left corner
+     ctx.fillText("0mm", 10, flipY(10));
+    //draw a ruller - numbers and strokes for each mm
+    for(var j = 1; j < 3; j++){
+        ctx.beginPath();
+        ctx.moveTo(10, flipY(10 + j*scale -1));
+        ctx.lineTo(20, flipY(10 + j*scale -1));
+        ctx.stroke();
+        ctx.fillText(j + "mm", 10, flipY(10 + j*scale));
+    }
+    //draw labeled ends of lines 
+    for (var i = 0; i < lines.length; i++) {
+        ctx.beginPath();
+        ctx.arc((lines[i].xEnd - x0)*scale, flipY((lines[i].yEnd - y0)*scale), 2, 0, 2 * Math.PI);
+        ctx.fill();
+        //draw half transparent lines towards the theta direction, stroke 5, color blue, length scale
+        ctx.strokeStyle = "rgba(0, 0, 255, 0.25)";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo((lines[i].xEnd - x0)*scale, flipY((lines[i].yEnd - y0)*scale));
+        ctx.lineTo((lines[i].xEnd - x0)*scale + scale*Math.cos(lines[i].theta+3.14), flipY( (lines[i].yEnd - y0)*scale + scale*Math.sin(lines[i].theta+3.14)));
+        ctx.stroke();
+
+       
+        //draw labels for each line end
+        var label = "";
+        var offsetX, offsetY;
+        if(i == 0){
+            label = "TL";
+            offsetX = -10;
+            offsetY = 10;
+        }
+        else if(i == 1){
+            label = "TR";
+            offsetX = 10;
+            offsetY = 10;
+        }
+        else if(i == 2){
+            label = "BL";
+            offsetX = -20;
+            offsetY = -20;
+        }
+        else if(i == 3){
+            label = "BR";
+            offsetX = 10;
+            offsetY = -10;
+        }
+        ctx.fillText(label, (lines[i].xEnd - x0)*scale + offsetX, flipY((lines[i].yEnd - y0)*scale + offsetY) );
+        //print fitness of this set of lines io the top left corner, and x y coordinates of the line ends, labeled:
+        ctx.fillText("Measurement " + measurementID +", Fitness: " + size.toFixed(4), 20, 10);
+        //label end of lines
+        ctx.fillText(label + ": (" + (lines[i].xEnd - x0).toFixed(2) + ", " + (lines[i].yEnd - y0).toFixed(2) + ")", 20,30+i*15 );
+        
+    }
+}
+
+
 
 function findMaxFitnessWithTreshold(initialGuess, measurements, treshold) {
     var t0 = performance.now();
@@ -833,14 +929,6 @@ var initialGuess = {
     br: {x: initialWidth, y: 0},
     fitness: 0
 }
-
-
-
-const centerX = initialWidth/2;
-const centerY = initialHeight/2;
-
-//calculateTensions(centerX, centerY, initialGuess);
-
 
 //Un-comment this code to use the simulated measurements
 
@@ -979,14 +1067,6 @@ var measurements = [
 
 //measurements = projectMeasurements(measurements);
 
-
-//const stretch_guess = 0.01;
-//const stretch_guess = 0.001;
-const stretch_guess = 0.03;
-computeLinesFitness(measurements, initialGuess);
-
-//measurements = scaleMeasurementsBasedOnTension(measurements,stretch_guess);
-measurements = projectMeasurements(measurements);
 
 
 
