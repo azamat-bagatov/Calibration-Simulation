@@ -221,6 +221,7 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .01);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
+    
     if(secondRun){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
@@ -304,7 +305,7 @@ function _filterOutliers(measurements, individual){
         var avgDistance = computeEndpointFitness(lines[0], lines[1], lines[2], lines[3]);
 
         // if distance is more than avgDistance, change the length of the line to make the line end at the center of mass, then adjust the corresponding measurement length:
-        if ( distance > avgDistance*0.5 ){
+        if ( distance > avgDistance*filteringCoefficient ){
             var newLine = computeLineEndPoint({xBegin: lines[index].xBegin, yBegin: lines[index].yBegin, theta: lines[index].theta, length: distance});
             lines[index] = newLine;
             //adjust the corresponding measurement length:
@@ -1155,11 +1156,10 @@ var measurements = [
 
 //Do projection and scaling
 //measurements = scaleMeasurements(measurements, 0.9945);
-
 //measurements = projectMeasurements(measurements);
 
 
-
+const filteringCoefficient = 0.5; //0.5 filters all of the worst points, 1.5 filters ~none of the worst points
 
 </script>
 
