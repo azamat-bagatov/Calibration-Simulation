@@ -125,7 +125,8 @@ function computeEndpointFitness(line1, line2, line3, line4){
 }
 */
 
-//alternative metrics for fitness, we find the distance fromn the center of mass of the lines to each line end point and average them
+//alternative metrics for fitness 1, we find the distance fromn the center of mass of the lines to each line end point and average them
+/*
 function computeEndpointFitness(line1, line2, line3, line4){
     var centerOfMass = _centerOfMass([line1, line2, line3, line4]);
     var distances = [];
@@ -136,6 +137,34 @@ function computeEndpointFitness(line1, line2, line3, line4){
     var fitness = calculateAverage(distances);
     return fitness;
 }
+*/
+//alternative metrics for fitness 2, where we find the distance to the point of intersection of two lines: 
+//one is between TL and BR endpoints, and another is between TR and BL endpoints
+function computeEndpointFitness(line1, line2, line3, line4){
+    var intersectionPoint = _findIntersectionPoint(line1, line4, line2, line3);
+    var distances = [];
+    distances.push( distanceBetweenPoints(intersectionPoint.x, intersectionPoint.y, line1.xEnd, line1.yEnd) );
+    distances.push( distanceBetweenPoints(intersectionPoint.x, intersectionPoint.y, line2.xEnd, line2.yEnd) );
+    distances.push( distanceBetweenPoints(intersectionPoint.x, intersectionPoint.y, line3.xEnd, line3.yEnd) );
+    distances.push( distanceBetweenPoints(intersectionPoint.x, intersectionPoint.y, line4.xEnd, line4.yEnd) );
+    var fitness = calculateAverage(distances);
+    return fitness;
+}
+//function to calculate the coordinates of the intersection point of two lines, between ends of line1 and line4 and line 2 and line 3
+function _findIntersectionPoint(line1, line2, line3, line4){
+    var x1 = line1.xEnd;
+    var y1 = line1.yEnd;
+    var x2 = line4.xEnd;
+    var y2 = line4.yEnd;
+    var x3 = line2.xEnd;
+    var y3 = line2.yEnd;
+    var x4 = line3.xEnd;
+    var y4 = line3.yEnd;
+    var x = ((x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
+    var y = ((x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
+    return {x: x, y: y};
+}
+
 /**
  * Computes the end point of a line based on its starting point, angle, and length.
  * @param {Object} line - The line to compute the end point for.
@@ -334,6 +363,8 @@ function _filterOutliers(measurements, individual){
             else if (index == 3){
                 measurements[i].br = distanceBetweenPoints(centerOfMass.x, centerOfMass.y, lines[index].xBegin, lines[index].yBegin);
             }
+            filtered_map[i][index] = 1;
+
             lines_filtered++;
         }
     }
@@ -772,7 +803,7 @@ function findMaxFitness(initialGuess, measurements) {
             console.log("Stagnant Counter: " + stagnantCounter);
         }
 
-        if (newFitness <= maxFitness) {
+        if (newFitness <= maxFitness+0.0002) {
             stagnantCounter++;
         } else {
             stagnantCounter = 0;
@@ -924,11 +955,12 @@ function drawLineEnds( measurementID){
     var trLine = computeLineEndPoint({xBegin:result_global.tr.x, yBegin:result_global.tr.y, theta: measurements[measurementID].trTheta,length: measurements[measurementID].tr});
     var blLine = computeLineEndPoint({xBegin:result_global.bl.x, yBegin:result_global.bl.y, theta: measurements[measurementID].blTheta,length: measurements[measurementID].bl});
     var brLine = computeLineEndPoint({xBegin:result_global.br.x, yBegin:result_global.br.y, theta: measurements[measurementID].brTheta,length: measurements[measurementID].br});
-    var size = 1/result_global.fitness;
+    var size = result_global.fitness;
+
     // computeEndpointFitness(tlLine, trLine, blLine, brLine);
     var lines = [tlLine, trLine, blLine, brLine];
-    var x0 = blLine.xEnd - size*2;
-    var y0 = blLine.yEnd - size*2;
+    var x0 = blLine.xEnd - size*5;
+    var y0 = blLine.yEnd - size*5;
     let scale = document.getElementById("partameterField").value;
 
     //show real scale ruler at the bottom left corner
@@ -946,13 +978,19 @@ function drawLineEnds( measurementID){
         ctx.beginPath();
         ctx.arc((lines[i].xEnd - x0)*scale, flipY((lines[i].yEnd - y0)*scale), 2, 0, 2 * Math.PI);
         ctx.fill();
-        //draw half transparent lines towards the theta direction, stroke 5, color blue, length scale
-        ctx.strokeStyle = "rgba(0, 0, 255, 0.25)";
+        //draw half transparent lines towards the theta direction, stroke 5, color blue, length scale, draw the filtered lines in red
         ctx.lineWidth = 5;
         ctx.beginPath();
+        if( filtered_map[measurementID][i] == 1){
+            ctx.strokeStyle = "rgba(255, 0, 0, 0.25)";
+        }
+        else{
+            ctx.strokeStyle = "rgba(0, 0, 255, 0.25)";
+        }
         ctx.moveTo((lines[i].xEnd - x0)*scale, flipY((lines[i].yEnd - y0)*scale));
         ctx.lineTo((lines[i].xEnd - x0)*scale + scale*Math.cos(lines[i].theta+3.14), flipY( (lines[i].yEnd - y0)*scale + scale*Math.sin(lines[i].theta+3.14)));
         ctx.stroke();
+        
 
        
         //draw labels for each line end
@@ -980,7 +1018,7 @@ function drawLineEnds( measurementID){
         }
         ctx.fillText(label, (lines[i].xEnd - x0)*scale + offsetX, flipY((lines[i].yEnd - y0)*scale + offsetY) );
         //print fitness of this set of lines io the top left corner, and x y coordinates of the line ends, labeled:
-        ctx.fillText("Measurement " + measurementID +", Fitness: " + size.toFixed(4), 20, 10);
+        ctx.fillText("Measurement " + measurementID +", fitness: " + size.toFixed(5), 20, 10);
         //label end of lines
         ctx.fillText(label + ": (" + (lines[i].xEnd - x0).toFixed(2) + ", " + (lines[i].yEnd - y0).toFixed(2) + ")", 20,30+i*15 );
         
@@ -989,7 +1027,7 @@ function drawLineEnds( measurementID){
 
 
 
-function findMaxFitnessWithTreshold(initialGuess, measurements, treshold) {
+function _findMaxFitnessWithTreshold(initialGuess, measurements, treshold) {
     var t0 = performance.now();
     var result = findMaxFitness(initialGuess, measurements);
     var t1 = performance.now();
@@ -1173,7 +1211,14 @@ var measurements = [
 
 
 const filteringCoefficient = 0.5; //0.5 filters all of the worst points, 1.5 filters ~none of the worst points
-
+//create a 2d array to keep track of which lines were filtered out, fill it with 0s
+var filtered_map = [];
+for (var i = 0; i < measurements.length; i++) {
+    filtered_map[i] = [];
+    for (var j = 0; j < 4; j++) {
+        filtered_map[i][j] = 0;
+    }
+}
 </script>
 
 </body>
