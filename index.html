@@ -221,8 +221,10 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .01);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
-    //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
-    //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
+    if(secondRun){
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
+    var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
+    }
     //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0000001);
     //var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00000001);
 
@@ -857,6 +859,7 @@ computeEndButton.addEventListener('click', () => {
     }
     t0 = performance.now();
     var filteredCount = _filterOutliers(measurements,result);
+    secondRun = true;
     result = findMaxFitness(initialGuess, measurements );
     t1 = performance.now();
     console.log("Call to findMaxFitness took " + (t1 - t0) + " milliseconds.");
@@ -867,7 +870,7 @@ computeEndButton.addEventListener('click', () => {
     drawLineEnds(0);
 
 });
-
+var secondRun = false;
 var cursor  = 0;
 //two buttons for scrolling theought the measurements labeled with up and down arrows
 const scrollUpButton = document.getElementById('scroll-up-button');
