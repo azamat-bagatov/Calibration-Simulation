@@ -1,0 +1,18 @@
+Tests, 23 Aug
+
+Test run, Github ver. "better scaling" :
+
+(-3.725214731684591, 2126.553643048068), (3047.830866243564, 2127.371978090692)
+ (0, 0), (3049.1802133768697, 0)
+Fitness: 1.1782894147185787
+
+
+
+Filtering measurements, then re-running findMax with the initialGuess
+Github ver. "filering 1.0"
+
+Filtered 64 measurements
+
+(-3.629393205079763, 2131.3170842117843), (3044.2150074211745, 2132.3130645185533)
+(0, 0), (3045.8659546496065, 0)
+Fitness: 1.6226753550860467

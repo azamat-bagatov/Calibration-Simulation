@@ -260,6 +260,69 @@ function computeDistanceFromCenterOfMass(lineToCompare, line2, line3, line4){
 
     return {x: lineToCompare.xEnd - x, y: lineToCompare.yEnd - y};
 }
+//lines array, any size
+function _centerOfMass(lines){
+    var x = 0;
+    var y = 0;
+    for (var i = 0; i < lines.length; i++) {
+        x += lines[i].xEnd;
+        y += lines[i].yEnd;
+    }
+    return {x: x/lines.length, y: y/lines.length};
+}
+
+//find the line index which is the furthest from center of mass and return line index and distance 
+function _findFurtherestFromCenterOfMass ( lines ){
+    var centerOfMass = _centerOfMass(lines);
+    var distances = [];
+    for (var i = 0; i < lines.length; i++) {
+        distances.push( distanceBetweenPoints(centerOfMass.x, centerOfMass.y, lines[i].xEnd, lines[i].yEnd) );
+    }
+    var maxDistance = Math.max(...distances);
+    var maxIndex = distances.indexOf(maxDistance);
+    return {index: maxIndex, distance: maxDistance};
+}
+
+//go throught the measurements, find the lines furthest from the center of mass, and change their length value, so the line End is at the center of mass
+function _filterOutliers(measurements, individual){
+    var lines_filtered = 0;
+    for (var i = 0; i < measurements.length; i++) {
+        var lines = computeLines(measurements[i], individual);
+        var {index, distance} = _findFurtherestFromCenterOfMass(lines);
+        var centerOfMass = _centerOfMass(lines);
+        var avgDistance = computeEndpointFitness(lines[0], lines[1], lines[2], lines[3]);
+
+        // if distance is more than 10mm, change the length of the line to make the line end at the center of mass, then adjust the corresponding measurement length:
+        if ( distance > avgDistance ){
+            var newLine = computeLineEndPoint({xBegin: lines[index].xBegin, yBegin: lines[index].yBegin, theta: lines[index].theta, length: distance});
+            lines[index] = newLine;
+            //adjust the corresponding measurement length:
+            if (index == 0){
+                measurements[i].tl = distanceBetweenPoints(centerOfMass.x, centerOfMass.y, lines[index].xBegin, lines[index].yBegin);
+            }
+            else if (index == 1){
+                measurements[i].tr = distanceBetweenPoints(centerOfMass.x, centerOfMass.y, lines[index].xBegin, lines[index].yBegin);
+            }
+            else if (index == 2){
+                measurements[i].bl = distanceBetweenPoints(centerOfMass.x, centerOfMass.y, lines[index].xBegin, lines[index].yBegin);
+            }
+            else if (index == 3){
+                measurements[i].br = distanceBetweenPoints(centerOfMass.x, centerOfMass.y, lines[index].xBegin, lines[index].yBegin);
+            }
+            lines_filtered++;
+        }
+    }
+    return lines_filtered;
+}
+
+function computeLines(measurement, individual){
+        var tlLine = computeLineEndPoint({xBegin: individual.tl.x, yBegin: individual.tl.y, theta: measurement.tlTheta, length: measurement.tl});
+        var trLine = computeLineEndPoint({xBegin: individual.tr.x, yBegin: individual.tr.y, theta: measurement.trTheta, length: measurement.tr});
+        var blLine = computeLineEndPoint({xBegin: individual.bl.x, yBegin: individual.bl.y, theta: measurement.blTheta, length: measurement.bl});
+        var brLine = computeLineEndPoint({xBegin: individual.br.x, yBegin: individual.br.y, theta: measurement.brTheta, length: measurement.br});
+        return [tlLine, trLine, blLine, brLine];
+}
+
 
 /**
  * Computes the distances from the center of mass for four lines and converts them into the relevant variables that we can tweak.
@@ -759,9 +822,7 @@ var result_global;
 
 const computeEndButton = document.getElementById('compute-end-button');
 computeEndButton.addEventListener('click', () => {
-    //measure time to compute
-    //subset1 = measurements.slice(0, 50);
-    //subset2 = measurements.slice(50, 100);
+
     console.log("Initial guess: " + initialGuess.fitness);
 
     bottomTension = 140;
@@ -770,13 +831,34 @@ computeEndButton.addEventListener('click', () => {
     measurements = scaleMeasurementsBasedOnTension(measurements,stretch_guess);
     measurements = projectMeasurements(measurements);
 
+    //measure time to compute
+    var t0 = performance.now();
     result = findMaxFitness(initialGuess, measurements);
+    var t1 = performance.now();
+    console.log("Call to findMaxFitness took " + (t1 - t0) + " milliseconds.");
     printResults(result);
+    
+
+    initialGuess = {
+        tl: {x: 0, y: initialHeight},
+        tr: {x: initialWidth, y: initialHeight},
+        bl: {x: 0, y: 0},
+        br: {x: initialWidth, y: 0},
+        fitness: 0
+    }
+    t0 = performance.now();
+    var filteredCount = _filterOutliers(measurements,result);
+    result = findMaxFitness(initialGuess, measurements );
+    t1 = performance.now();
+    console.log("Call to findMaxFitness took " + (t1 - t0) + " milliseconds.");
+    console.log("Filtered " + filteredCount + " measurements");
     result_global = result;
-    console.log("bottomTension: " + bottomTension);
+
+    printResults(result);
     drawLineEnds(0);
 
 });
+
 var cursor  = 0;
 //two buttons for scrolling theought the measurements labeled with up and down arrows
 const scrollUpButton = document.getElementById('scroll-up-button');
@@ -920,10 +1002,6 @@ function findMaxFitnessWithTreshold(initialGuess, measurements, treshold) {
 
 //Establish initial guesses for the corners
 var initialGuess = {
-    // tl: {x: 0, y: initialHeight},
-    // tr: {x: initialWidth, y: initialHeight},
-    // bl: {x: 0, y: 0},
-    // br: {x: initialWidth, y: 0},
     tl: {x: 0, y: initialHeight},
     tr: {x: initialWidth, y: initialHeight},
     bl: {x: 0, y: 0},
