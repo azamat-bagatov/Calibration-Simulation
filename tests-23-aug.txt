@@ -7,9 +7,9 @@ Test run, Github ver. "better scaling" :
 Fitness: 1.1782894147185787
 
 
-
-Filtering measurements, then re-running findMax with the initialGuess
+------------------------------------------------------------------
 Github ver. "filering 1.0"
+Filtering measurements, then re-running findMax with the initialGuess
 Filtering just extends "bad lines" towards center of mass of 4 points
 The measurement is filtered if distance from center of mass is > fitness of 4 line set
 Filtered 64 measurements
@@ -18,10 +18,33 @@ Filtered 64 measurements
 (0, 0), (3045.8659546496065, 0)
 Fitness: 1.6226753550860467
 
+---------------------------------------------
 Github ver. "filering 1.1"
 Change to extending the lines to the center of mass of the rest of the 3 points
 
 Filtered 64 measurements
-index.html:575 (-3.6539415128144324, 2130.6614837657107), (3044.655085762512, 2131.695537060631)
+
+(-3.6539415128144324, 2130.6614837657107), (3044.655085762512, 2131.695537060631)
  (0, 0), (3046.327056597359, 0)
-index.html:576 Fitness: 1.859340649685693
+Fitness: 1.859340649685693
+---------------------------------------------
+
+Github ver. "filering 1.2"
+Added a scaling coefficient to the fil;tering treshold (the distance from center of mass)
+
+0.75 
+
+Filtered 105 measurements
+(-3.6783142374420486, 2128.297639456907), (3046.5089984965593, 2129.2000959805564)
+ (0, 0), (3047.988921089631, 0)
+Fitness: 2.968663318361666
+
+
+0.5  -- evertyhing 0.5 and below basically filters the worst line in every measurement
+Filtered 110 measurements
+(-3.7282612139898625, 2127.6490518405312), (3046.9710765260606, 2128.5627203952113)
+ (0, 0), (3048.394796616387, 0)
+Fitness: 3.1596924950443017
+
+----------------------------------------------
+

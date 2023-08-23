@@ -302,7 +302,7 @@ function _filterOutliers(measurements, individual){
         var avgDistance = computeEndpointFitness(lines[0], lines[1], lines[2], lines[3]);
 
         // if distance is more than avgDistance, change the length of the line to make the line end at the center of mass, then adjust the corresponding measurement length:
-        if ( distance > avgDistance ){
+        if ( distance > avgDistance*0.5 ){
             var newLine = computeLineEndPoint({xBegin: lines[index].xBegin, yBegin: lines[index].yBegin, theta: lines[index].theta, length: distance});
             lines[index] = newLine;
             //adjust the corresponding measurement length:
