@@ -289,10 +289,19 @@ function _filterOutliers(measurements, individual){
     for (var i = 0; i < measurements.length; i++) {
         var lines = computeLines(measurements[i], individual);
         var {index, distance} = _findFurtherestFromCenterOfMass(lines);
-        var centerOfMass = _centerOfMass(lines);
+        //compute center of mass of the lines without the lines[index]:
+        var linesWithoutIndex = [];
+        for (var j = 0; j < lines.length; j++) {
+            if (j != index){
+                linesWithoutIndex.push(lines[j]);
+            }
+        }
+        var centerOfMass = _centerOfMass(linesWithoutIndex);
+        
+        
         var avgDistance = computeEndpointFitness(lines[0], lines[1], lines[2], lines[3]);
 
-        // if distance is more than 10mm, change the length of the line to make the line end at the center of mass, then adjust the corresponding measurement length:
+        // if distance is more than avgDistance, change the length of the line to make the line end at the center of mass, then adjust the corresponding measurement length:
         if ( distance > avgDistance ){
             var newLine = computeLineEndPoint({xBegin: lines[index].xBegin, yBegin: lines[index].yBegin, theta: lines[index].theta, length: distance});
             lines[index] = newLine;
