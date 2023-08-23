@@ -109,6 +109,7 @@ function getEndPoint(startX, startY, angle, length) {
  * @param {Object} line4 - The fourth line to compare.
  * @returns {number} - The fitness value, which is the average distance between all line end points.
  */
+ /*
 function computeEndpointFitness(line1, line2, line3, line4){
 
     const a = distanceBetweenPoints(line1.xEnd, line1.yEnd, line2.xEnd, line2.yEnd);
@@ -119,10 +120,22 @@ function computeEndpointFitness(line1, line2, line3, line4){
     const f = distanceBetweenPoints(line3.xEnd, line3.yEnd, line4.xEnd, line4.yEnd);
 
     const fitness = (a+b+c+d+e+f)/6;
-
+    
     return fitness;
 }
+*/
 
+//alternative metrics for fitness, we find the distance fromn the center of mass of the lines to each line end point and average them
+function computeEndpointFitness(line1, line2, line3, line4){
+    var centerOfMass = _centerOfMass([line1, line2, line3, line4]);
+    var distances = [];
+    distances.push( distanceBetweenPoints(centerOfMass.x, centerOfMass.y, line1.xEnd, line1.yEnd) );
+    distances.push( distanceBetweenPoints(centerOfMass.x, centerOfMass.y, line2.xEnd, line2.yEnd) );
+    distances.push( distanceBetweenPoints(centerOfMass.x, centerOfMass.y, line3.xEnd, line3.yEnd) );
+    distances.push( distanceBetweenPoints(centerOfMass.x, centerOfMass.y, line4.xEnd, line4.yEnd) );
+    var fitness = calculateAverage(distances);
+    return fitness;
+}
 /**
  * Computes the end point of a line based on its starting point, angle, and length.
  * @param {Object} line - The line to compute the end point for.
@@ -221,7 +234,7 @@ function magneticallyAttractedLinesFitness(measurement, individual){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .01);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .0001);
-    
+
     if(secondRun){
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .00001);
     var {tlLine, trLine, blLine, brLine} = walkLines(tlLine, trLine, blLine, brLine, .000001);
